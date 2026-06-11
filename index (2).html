@@ -1,0 +1,2314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Golden Quest — Online</title>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #0a0806;
+  --surface: #141008;
+  --surface2: #1c1810;
+  --surface3: #252018;
+  --gold: #c8903a;
+  --gold-light: #e8b45a;
+  --gold-dim: #6a4a18;
+  --text: #f0e6d0;
+  --text-dim: #9a8a70;
+  --text-muted: #554840;
+  --coins: #f0c030;
+  --crafts: #60b860;
+  --jewels: #e0508a;
+  --gems: #5090e0;
+  --danger: #e05050;
+  --success: #50b870;
+  --info: #5090d0;
+  --border: rgba(200,144,58,0.2);
+  --border-strong: rgba(200,144,58,0.5);
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ── LOADING ── */
+#screen-loading {
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+.loading-logo {
+  font-family: 'Cinzel', serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--gold-light);
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--gold-dim);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── LOGIN ── */
+#screen-login {
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(ellipse at 50% 20%, #1e1208 0%, var(--bg) 65%);
+}
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.game-logo {
+  font-family: 'Cinzel', serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--gold-light);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+.game-tagline {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1.5rem;
+  background: white;
+  color: #333;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-google:hover { background: #f0f0f0; transform: translateY(-1px); }
+.google-icon { width: 20px; height: 20px; }
+.login-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 1.5rem; }
+
+/* ── LOBBY ── */
+#screen-lobby {
+  padding: 0;
+  background: radial-gradient(ellipse at 50% 0%, #1e1208, var(--bg) 50%);
+}
+.lobby-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.lobby-logo {
+  font-family: 'Cinzel', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.08em;
+}
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+}
+.user-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.user-avatar-placeholder {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--gold-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-family: 'Cinzel', serif;
+  color: var(--gold-light);
+}
+.btn-signout {
+  background: none;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s;
+}
+.btn-signout:hover { border-color: var(--danger); color: var(--danger); }
+
+.lobby-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+.lobby-content { width: 100%; max-width: 520px; }
+.lobby-greeting {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+.lobby-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.btn-main {
+  width: 100%;
+  padding: 0.85rem;
+  background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+  border: none;
+  border-radius: var(--radius);
+  color: #0a0806;
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-main:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-main:active { transform: translateY(0); }
+.btn-secondary {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--gold-light);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { background: var(--surface3); }
+
+.join-row {
+  display: flex;
+  gap: 0.75rem;
+}
+.join-row input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.join-row input::placeholder { color: var(--text-muted); letter-spacing: 0.1em; text-transform: none; font-family: 'Inter', sans-serif; }
+.join-row input:focus { outline: none; border-color: var(--gold); }
+.join-row .btn-secondary { width: auto; white-space: nowrap; }
+
+/* ── ROOM / WAITING ── */
+#screen-room {
+  background: radial-gradient(ellipse at 50% 0%, #1e1208, var(--bg) 50%);
+}
+.room-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.room-code-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.room-code-label { font-size: 0.75rem; color: var(--text-dim); }
+.room-code {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.25em;
+  background: var(--surface2);
+  border: 1px solid var(--border-strong);
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  title: "Clic para copiar";
+  transition: all 0.15s;
+}
+.room-code:hover { background: var(--surface3); }
+.copied-badge {
+  font-size: 0.7rem;
+  color: var(--success);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.copied-badge.show { opacity: 1; }
+
+.room-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  gap: 1.5rem;
+}
+.waiting-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  color: var(--text);
+  text-align: center;
+}
+.waiting-sub { font-size: 0.9rem; color: var(--text-dim); text-align: center; }
+.players-waiting {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.player-waiting-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 160px;
+}
+.player-waiting-card.host { border-color: var(--gold-dim); }
+.pw-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--gold-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  color: var(--gold-light);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.pw-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pw-name { font-weight: 500; font-size: 0.9rem; }
+.pw-host { font-size: 0.7rem; color: var(--gold); }
+.pw-ready { font-size: 0.7rem; color: var(--text-dim); }
+
+/* Room config */
+.room-config {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 440px;
+}
+.cfg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+.cfg-row:last-child { margin-bottom: 0; }
+.cfg-label { font-size: 0.85rem; color: var(--text-dim); }
+.cfg-chips { display: flex; gap: 0.4rem; }
+.cfg-chip {
+  padding: 0.3rem 0.7rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.78rem;
+  transition: all 0.15s;
+}
+.cfg-chip.on { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-light); }
+.cfg-chip:hover { border-color: var(--gold-dim); }
+.cfg-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.cfg-toggle input[type=checkbox] { accent-color: var(--gold); width: 14px; height: 14px; }
+.cfg-notice { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
+
+/* ── GAME SCREEN ── */
+#screen-game {
+  flex-direction: column;
+  background: var(--bg);
+}
+.game-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.topbar-logo {
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+.score-pills { display: flex; gap: 0.4rem; flex-wrap: wrap; flex: 1; }
+.score-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.score-pill.myturn { border-color: var(--gold); color: var(--gold-light); background: rgba(200,144,58,0.1); }
+.score-pill.active { border-color: var(--info); color: #90c0f0; background: rgba(80,144,208,0.1); }
+.score-pill-pts { font-family: 'Cinzel', serif; font-weight: 600; }
+.target-badge { font-size: 0.72rem; color: var(--text-muted); margin-left: auto; }
+
+.game-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  overflow-y: auto;
+}
+
+/* TURN INDICATOR */
+.turn-banner {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+.turn-banner.my-turn {
+  background: rgba(200,144,58,0.12);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold-light);
+}
+.turn-banner.waiting-turn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.turn-banner.frenzy {
+  background: rgba(224,80,80,0.12);
+  border: 1px solid rgba(224,80,80,0.4);
+  color: #e09090;
+}
+
+/* Panel */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+}
+.panel.active-panel { border-color: var(--gold-dim); }
+.panel-label {
+  font-size: 0.68rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.15em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* Phase bar */
+.phase-bar { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.phase-tag {
+  padding: 0.2rem 0.55rem;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+}
+.phase-tag.done { border-color: var(--success); color: var(--success); opacity: 0.7; }
+.phase-tag.cur { background: rgba(200,144,58,0.15); border-color: var(--gold); color: var(--gold-light); }
+
+/* Cards */
+.cards-row { display: flex; gap: 5px; flex-wrap: wrap; align-items: flex-end; }
+.card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 82px;
+  border-radius: 7px;
+  border: 1.5px solid;
+  position: relative;
+  flex-shrink: 0;
+  transition: transform 0.12s, box-shadow 0.12s;
+  cursor: default;
+  user-select: none;
+}
+.card.clickable { cursor: pointer; }
+.card.clickable:hover { transform: translateY(-5px); box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+.card.selected { transform: translateY(-8px) !important; box-shadow: 0 8px 20px rgba(200,144,58,0.4) !important; border-color: var(--gold) !important; }
+.card.facedown { background: var(--surface2); border-color: var(--gold-dim); cursor: default; }
+.card.empty-slot { background: var(--surface2); border-color: var(--text-muted); border-style: dashed; opacity: 0.4; cursor: default; }
+
+.card-num { font-family: 'Cinzel', serif; font-size: 0.88rem; font-weight: 700; line-height: 1; }
+.card-icon { font-size: 1.1rem; line-height: 1; margin-top: 1px; }
+.card-gems { font-size: 0.5rem; line-height: 1.3; text-align: center; margin-top: 1px; }
+.card-lbl { font-size: 0.56rem; color: var(--text-dim); text-align: center; margin-top: 1px; font-family: 'Cinzel', serif; }
+.card-face-back { font-size: 1.2rem; color: var(--gold-dim); }
+
+.suit-coins  { background: #120e00; border-color: #806020; }
+.suit-crafts { background: #081208; border-color: #285828; }
+.suit-jewels { background: #120808; border-color: #882850; }
+.suit-gems   { background: #080c18; border-color: #284888; }
+.suit-tool   { background: #080818; border-color: #383880; }
+.suit-golden { background: #120e00; border-color: var(--gold); }
+.suit-joker  { background: #100818; border-color: #584888; }
+
+.suit-coins  .card-icon { color: var(--coins); }
+.suit-crafts .card-icon { color: var(--crafts); }
+.suit-jewels .card-icon { color: var(--jewels); }
+.suit-gems   .card-icon { color: var(--gems); }
+.suit-tool   .card-icon { color: #9090d8; }
+.suit-golden .card-icon { color: var(--gold-light); }
+.suit-joker  .card-icon { color: #c090f0; }
+
+.suit-coins  .card-num { color: var(--coins); }
+.suit-crafts .card-num { color: var(--crafts); }
+.suit-jewels .card-num { color: var(--jewels); }
+.suit-gems   .card-num { color: var(--gems); }
+.suit-tool   .card-num { color: #9090d8; }
+.suit-golden .card-num { color: var(--gold-light); }
+
+/* Action buttons */
+.actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
+.btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.3; cursor: default; }
+.btn-gold  { background: rgba(200,144,58,0.15); border-color: var(--gold); color: var(--gold-light); }
+.btn-gold:hover:not(:disabled)  { background: rgba(200,144,58,0.25); }
+.btn-blue  { background: rgba(80,144,208,0.12); border-color: var(--info); color: #90c0f0; }
+.btn-blue:hover:not(:disabled)  { background: rgba(80,144,208,0.22); }
+.btn-red   { background: rgba(224,80,80,0.12); border-color: var(--danger); color: #e09090; }
+.btn-red:hover:not(:disabled)   { background: rgba(224,80,80,0.22); }
+.btn-green { background: rgba(80,184,112,0.12); border-color: var(--success); color: #80d898; }
+.btn-green:hover:not(:disabled) { background: rgba(80,184,112,0.22); }
+.btn-dim   { background: var(--surface2); border-color: var(--text-muted); color: var(--text-dim); }
+.btn-dim:hover:not(:disabled)   { background: var(--surface3); }
+
+/* In-sack mini buttons */
+.mini-btn {
+  position: absolute;
+  bottom: 2px;
+  font-size: 0.55rem;
+  padding: 1px 3px;
+  border-radius: 3px;
+  border: 1px solid;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.mini-discard { left: 2px; border-color: var(--danger); color: var(--danger); background: rgba(224,80,80,0.1); }
+.mini-swap    { right: 2px; border-color: var(--success); color: var(--success); background: rgba(80,184,112,0.1); }
+
+/* Two-col grid */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.65rem; }
+
+/* Opponents */
+.opp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem;
+}
+.opp-card.active-opp { border-color: var(--info); }
+.opp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
+.opp-name { font-size: 0.82rem; font-weight: 500; }
+.opp-pts { font-family: 'Cinzel', serif; font-size: 0.78rem; color: var(--gold); }
+
+.mini-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 56px;
+  border-radius: 5px;
+  border: 1px solid;
+  flex-shrink: 0;
+  font-size: 0.55rem;
+}
+.mini-facedown { background: var(--surface2); border-color: var(--gold-dim); color: var(--gold-dim); font-size: 0.9rem; }
+
+/* Log */
+.log-box {
+  max-height: 100px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: var(--surface2);
+  border-radius: 7px;
+}
+.log-entry {
+  font-size: 0.77rem;
+  color: var(--text-dim);
+  padding: 0.15rem 0 0.15rem 0.5rem;
+  border-left: 2px solid transparent;
+  line-height: 1.4;
+}
+.log-entry.ev-saque  { border-color: var(--gold); color: var(--gold-light); }
+.log-entry.ev-attack { border-color: var(--danger); color: #e09090; }
+.log-entry.ev-action { border-color: var(--info); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  max-width: 460px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal-title { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--gold-light); margin-bottom: 0.75rem; }
+.modal-body { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1rem; line-height: 1.5; }
+.modal-cards { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.modal-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--surface3);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  z-index: 300;
+  transition: transform 0.3s ease;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* End screen */
+#screen-end {
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: radial-gradient(ellipse at 50% 30%, #2a1a06, var(--bg) 70%);
+}
+.end-card {
+  background: var(--surface);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(200,144,58,0.15);
+}
+.end-trophy { font-size: 3.5rem; margin-bottom: 0.5rem; }
+.end-winner { font-family: 'Cinzel', serif; font-size: 1.6rem; color: var(--gold-light); margin-bottom: 0.3rem; }
+.end-sub { color: var(--text-dim); margin-bottom: 1.5rem; font-size: 0.9rem; }
+.end-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--surface2); font-size: 0.9rem; }
+.end-row.winner { color: var(--gold-light); font-weight: 500; }
+
+/* Error banner */
+.error-banner {
+  background: rgba(224,80,80,0.12);
+  border: 1px solid rgba(224,80,80,0.4);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  color: #e09090;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  display: none;
+}
+.error-banner.show { display: block; }
+
+/* Firebase config notice */
+.config-needed {
+  background: rgba(200,144,58,0.08);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.config-needed code {
+  background: var(--surface2);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  color: var(--gold-light);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .game-body { padding: 0.5rem; gap: 0.5rem; }
+  .card { width: 50px; height: 72px; }
+  .card-icon { font-size: 0.95rem; }
+  .card-num { font-size: 0.78rem; }
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="screen-loading" class="screen active">
+  <div class="loading-logo">⚜ GOLDEN QUEST</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen">
+  <div class="login-card">
+    <div class="game-logo">⚜ GOLDEN QUEST</div>
+    <div class="game-tagline">La búsqueda del mejor caza tesoros</div>
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg class="google-icon" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continuar con Google
+    </button>
+    <div id="loginError" class="error-banner">Error al iniciar sesión. Intentá de nuevo.</div>
+    <div class="login-note">Al ingresar aceptás que tu nombre y foto puedan verse en la sala de juego.</div>
+    <div class="config-needed" id="firebaseNotice" style="display:none">
+      ⚙️ Configuración requerida: para que el juego funcione necesitás reemplazar la configuración de Firebase en el código con tus propias credenciales. Buscá <code>FIREBASE_CONFIG_HERE</code> en el archivo.
+    </div>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div id="screen-lobby" class="screen">
+  <div class="lobby-header">
+    <div class="lobby-logo">⚜ GOLDEN QUEST</div>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <div class="user-pill">
+        <div class="user-avatar-placeholder" id="lobbyAvatarSmall">?</div>
+        <span id="lobbyUserName">—</span>
+      </div>
+      <button class="btn-signout" onclick="signOut()">Salir</button>
+    </div>
+  </div>
+  <div class="lobby-body">
+    <div class="lobby-content">
+      <div class="lobby-greeting" id="lobbyGreeting">Bienvenido, explorador</div>
+
+      <div class="lobby-section">
+        <div class="section-title">Nueva sala</div>
+        <button class="btn-main" onclick="createRoom()">⛏ Crear sala</button>
+      </div>
+
+      <div class="lobby-section">
+        <div class="section-title">Unirse a sala</div>
+        <div class="join-row">
+          <input type="text" id="joinCodeInput" placeholder="Código de sala (ej: ABCD12)" maxlength="6">
+          <button class="btn-secondary" onclick="joinRoom()">Unirse →</button>
+        </div>
+        <div id="joinError" class="error-banner">Sala no encontrada o ya comenzó la partida.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM / WAITING -->
+<div id="screen-room" class="screen">
+  <div class="room-header">
+    <div class="room-code-display">
+      <span class="room-code-label">Código de sala</span>
+      <span class="room-code" id="displayRoomCode" onclick="copyCode()" title="Clic para copiar">——————</span>
+      <span class="copied-badge" id="copiedBadge">¡Copiado!</span>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+      <span id="roomStatusText" style="font-size:0.8rem;color:var(--text-dim)">Esperando jugadores...</span>
+      <button class="btn-secondary" style="width:auto;padding:0.4rem 0.8rem;font-size:0.8rem" onclick="leaveRoom()">Abandonar</button>
+    </div>
+  </div>
+  <div class="room-body">
+    <div>
+      <div class="waiting-title">Sala de espera</div>
+      <div class="waiting-sub">Compartí el código con tus amigos para que se unan</div>
+    </div>
+    <div class="players-waiting" id="playersWaiting"></div>
+    <div class="room-config" id="roomConfig">
+      <div class="panel-label" style="margin-bottom:0.75rem">Configuración de partida</div>
+      <div class="cfg-row">
+        <span class="cfg-label">Tamaño del Saco</span>
+        <div class="cfg-chips" id="cfgSack">
+          <button class="cfg-chip" data-v="4" onclick="setCfg('sackSize',4,this)">4</button>
+          <button class="cfg-chip on" data-v="6" onclick="setCfg('sackSize',6,this)">6</button>
+          <button class="cfg-chip" data-v="8" onclick="setCfg('sackSize',8,this)">8</button>
+        </div>
+      </div>
+      <div class="cfg-row">
+        <span class="cfg-label">Modalidad</span>
+        <div class="cfg-chips" id="cfgMode">
+          <button class="cfg-chip on" data-v="seq" onclick="setCfg('mode','seq',this)">Secuencia</button>
+          <button class="cfg-chip" data-v="set" onclick="setCfg('mode','set',this)">Conjunto</button>
+          <button class="cfg-chip" data-v="free" onclick="setCfg('mode','free',this)">Libre</button>
+        </div>
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-toggle"><input type="checkbox" id="cfgFool" onchange="setCfgCheck('foolsGold',this)" checked> Fool's Gold</label>
+        <label class="cfg-toggle"><input type="checkbox" id="cfgBag" onchange="setCfgCheck('goldenBag',this)" checked> Golden Bag</label>
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-toggle"><input type="checkbox" id="cfgSeek" onchange="setCfgCheck('goldSeek',this)"> Gold-Seek</label>
+      </div>
+      <div class="cfg-notice" id="cfgNotice">Solo el host puede cambiar la configuración</div>
+    </div>
+    <div style="width:100%;max-width:440px" id="startBtnArea"></div>
+    <div id="waitingMsg" style="font-size:0.85rem;color:var(--text-dim);text-align:center"></div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div class="game-topbar">
+    <div class="topbar-logo">⚜ GQ</div>
+    <div class="score-pills" id="scorePills"></div>
+    <div class="target-badge">Meta: 40 pts</div>
+  </div>
+  <div class="game-body" id="gameBody"></div>
+</div>
+
+<!-- END -->
+<div id="screen-end" class="screen">
+  <div class="end-card">
+    <div class="end-trophy">👑</div>
+    <div class="end-winner" id="endWinnerName">—</div>
+    <div class="end-sub">¡Mejor Caza Tesoros!</div>
+    <div id="endScores" style="margin-bottom:1.5rem"></div>
+    <button class="btn-main" onclick="goLobby()">Volver al lobby</button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  ⚙️  FIREBASE CONFIGURATION
+//  Reemplazá estos valores con los de tu proyecto en Firebase
+//  https://console.firebase.google.com → Configuración del proyecto
+// ═══════════════════════════════════════════════════════════
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDjk_ORzFMZgCO51kUmhLeX_1HNqY7Ohas",
+  authDomain: "golden-quest01.firebaseapp.com",
+  projectId: "golden-quest01",
+  storageBucket: "golden-quest01.firebasestorage.app",
+  messagingSenderId: "78545682787",
+  appId: "1:78545682787:web:9d19ad21a77192062f1356"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);};
+
+// ═══════════════════════════════════════════════════════════
+//  INIT FIREBASE
+// ═══════════════════════════════════════════════════════════
+let app, auth, db;
+let currentUser = null;
+let currentRoomId = null;
+let isHost = false;
+let gameListeners = [];
+let localPlayerIndex = -1;
+
+function initFirebase() {
+  try {
+    if (FIREBASE_CONFIG.apiKey === "FIREBASE_CONFIG_HERE") {
+      document.getElementById('screen-loading').classList.remove('active');
+      document.getElementById('screen-login').classList.add('active');
+      document.getElementById('firebaseNotice').style.display = 'block';
+      return;
+    }
+    app = firebase.initializeApp(FIREBASE_CONFIG);
+    auth = firebase.auth();
+    db = firebase.database();
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = { uid: user.uid, name: user.displayName || 'Explorador', photo: user.photoURL || '' };
+        showScreen('lobby');
+        setupLobby();
+      } else {
+        showScreen('login');
+      }
+    });
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    showScreen('login');
+    document.getElementById('firebaseNotice').style.display = 'block';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════════
+async function signInWithGoogle() {
+  if (!auth) { showToast('Configurá Firebase primero.'); return; }
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  } catch(e) {
+    document.getElementById('loginError').classList.add('show');
+    console.error(e);
+  }
+}
+
+async function signOut() {
+  if (currentRoomId) await leaveRoom();
+  await auth.signOut();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOBBY
+// ═══════════════════════════════════════════════════════════
+function setupLobby() {
+  showScreen('lobby');
+  document.getElementById('lobbyGreeting').textContent = `Bienvenido, ${currentUser.name.split(' ')[0]}`;
+  document.getElementById('lobbyUserName').textContent = currentUser.name.split(' ')[0];
+  const av = document.getElementById('lobbyAvatarSmall');
+  if (currentUser.photo) {
+    av.innerHTML = `<img src="${currentUser.photo}" style="width:24px;height:24px;border-radius:50%;object-fit:cover">`;
+  } else {
+    av.textContent = currentUser.name[0].toUpperCase();
+  }
+}
+
+function generateRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+async function createRoom() {
+  if (!db) { showToast('Firebase no configurado.'); return; }
+  const code = generateRoomCode();
+  const roomData = {
+    code,
+    host: currentUser.uid,
+    status: 'waiting',
+    created: Date.now(),
+    config: { sackSize: 6, mode: 'seq', foolsGold: true, goldenBag: true, goldSeek: false },
+    players: {
+      [currentUser.uid]: {
+        uid: currentUser.uid,
+        name: currentUser.name,
+        photo: currentUser.photo || '',
+        score: 0,
+        ready: true,
+        joinedAt: Date.now()
+      }
+    }
+  };
+  await db.ref(`rooms/${code}`).set(roomData);
+  currentRoomId = code;
+  isHost = true;
+  showScreen('room');
+  listenRoom(code);
+}
+
+async function joinRoom() {
+  const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if (!code || code.length < 4) { showJoinError(); return; }
+  if (!db) { showToast('Firebase no configurado.'); return; }
+  const snap = await db.ref(`rooms/${code}`).get();
+  if (!snap.exists()) { showJoinError(); return; }
+  const room = snap.val();
+  if (room.status !== 'waiting') { document.getElementById('joinError').classList.add('show'); document.getElementById('joinError').textContent = 'La partida ya comenzó.'; return; }
+  const playerCount = room.players ? Object.keys(room.players).length : 0;
+  if (playerCount >= 4) { document.getElementById('joinError').classList.add('show'); document.getElementById('joinError').textContent = 'La sala está llena (máx. 4 jugadores).'; return; }
+  await db.ref(`rooms/${code}/players/${currentUser.uid}`).set({
+    uid: currentUser.uid, name: currentUser.name, photo: currentUser.photo || '',
+    score: 0, ready: true, joinedAt: Date.now()
+  });
+  currentRoomId = code;
+  isHost = false;
+  showScreen('room');
+  listenRoom(code);
+}
+
+function showJoinError() {
+  const el = document.getElementById('joinError');
+  el.textContent = 'Sala no encontrada o ya comenzó la partida.';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ROOM LISTENERS
+// ═══════════════════════════════════════════════════════════
+function listenRoom(code) {
+  document.getElementById('displayRoomCode').textContent = code;
+  const ref = db.ref(`rooms/${code}`);
+  const cb = ref.on('value', snap => {
+    if (!snap.exists()) { leaveRoomLocal(); return; }
+    const room = snap.val();
+    if (room.status === 'playing') {
+      removeRoomListeners();
+      startGame(room);
+      return;
+    }
+    if (room.status === 'ended') {
+      showEndScreen(room);
+      return;
+    }
+    renderWaitingRoom(room);
+  });
+  gameListeners.push({ ref, cb, type: 'value' });
+}
+
+function removeRoomListeners() {
+  gameListeners.forEach(({ ref, cb, type }) => ref.off(type, cb));
+  gameListeners = [];
+}
+
+function renderWaitingRoom(room) {
+  const players = room.players ? Object.values(room.players).sort((a,b) => a.joinedAt - b.joinedAt) : [];
+  isHost = room.host === currentUser.uid;
+  document.getElementById('roomStatusText').textContent = `${players.length}/4 jugadores`;
+
+  const pwEl = document.getElementById('playersWaiting');
+  pwEl.innerHTML = players.map(p => `
+    <div class="player-waiting-card ${p.uid === room.host ? 'host' : ''}">
+      <div class="pw-avatar">
+        ${p.photo ? `<img src="${p.photo}" alt="${p.name}">` : p.name[0].toUpperCase()}
+      </div>
+      <div>
+        <div class="pw-name">${p.name.split(' ')[0]}</div>
+        <div class="pw-host">${p.uid === room.host ? '⚜ Host' : '⚔ Jugador'}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Config display
+  const cfg = room.config || {};
+  const isH = isHost;
+  document.getElementById('cfgNotice').style.display = isH ? 'none' : 'block';
+  ['cfgSack', 'cfgMode'].forEach(id => {
+    document.querySelectorAll(`#${id} .cfg-chip`).forEach(c => {
+      c.disabled = !isH;
+      const v = c.dataset.v;
+      const field = id === 'cfgSack' ? 'sackSize' : 'mode';
+      const val = id === 'cfgSack' ? parseInt(v) : v;
+      c.classList.toggle('on', cfg[field] == val);
+    });
+  });
+  document.getElementById('cfgFool').checked = !!cfg.foolsGold;
+  document.getElementById('cfgBag').checked = !!cfg.goldenBag;
+  document.getElementById('cfgSeek').checked = !!cfg.goldSeek;
+  ['cfgFool','cfgBag','cfgSeek'].forEach(id => document.getElementById(id).disabled = !isH);
+
+  const startArea = document.getElementById('startBtnArea');
+  const waitMsg = document.getElementById('waitingMsg');
+  if (isH) {
+    if (players.length >= 2) {
+      startArea.innerHTML = `<button class="btn-main" onclick="hostStartGame()">⚔ Iniciar partida (${players.length} jugadores)</button>`;
+      waitMsg.textContent = '';
+    } else {
+      startArea.innerHTML = `<button class="btn-main" style="opacity:0.4;cursor:default" disabled>Esperando jugadores (mín. 2)...</button>`;
+      waitMsg.textContent = '';
+    }
+  } else {
+    startArea.innerHTML = '';
+    waitMsg.textContent = 'Esperando que el host inicie la partida...';
+  }
+}
+
+function setCfg(field, value, btn) {
+  if (!isHost) return;
+  db.ref(`rooms/${currentRoomId}/config/${field}`).set(value);
+  const groupId = field === 'sackSize' ? 'cfgSack' : 'cfgMode';
+  document.querySelectorAll(`#${groupId} .cfg-chip`).forEach(c => c.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function setCfgCheck(field, el) {
+  if (!isHost) { el.checked = !el.checked; return; }
+  db.ref(`rooms/${currentRoomId}/config/${field}`).set(el.checked);
+}
+
+async function leaveRoom() {
+  if (!currentRoomId) return;
+  try {
+    if (isHost) {
+      await db.ref(`rooms/${currentRoomId}`).remove();
+    } else {
+      await db.ref(`rooms/${currentRoomId}/players/${currentUser.uid}`).remove();
+    }
+  } catch(e) {}
+  leaveRoomLocal();
+}
+
+function leaveRoomLocal() {
+  removeRoomListeners();
+  currentRoomId = null;
+  isHost = false;
+  localPlayerIndex = -1;
+  showScreen('lobby');
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(currentRoomId || '').catch(() => {});
+  const badge = document.getElementById('copiedBadge');
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 2000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME START (HOST)
+// ═══════════════════════════════════════════════════════════
+async function hostStartGame() {
+  if (!isHost) return;
+  const snap = await db.ref(`rooms/${currentRoomId}`).get();
+  const room = snap.val();
+  const cfg = room.config;
+  const players = Object.values(room.players).sort((a,b) => a.joinedAt - b.joinedAt);
+
+  const deck = shuffle(buildDeck());
+  const gameState = {
+    status: 'playing',
+    config: cfg,
+    deck: deck,
+    discard: [],
+    currentPlayerIndex: 0,
+    phase: 'saque',
+    takenCard: null,
+    roundWinners: [],
+    frenzy: false,
+    frenzyPlayerIndices: [],
+    roundNum: 1,
+    log: [],
+    gamePlayers: players.map((p, i) => ({
+      uid: p.uid, name: p.name, photo: p.photo || '',
+      sack: [], score: 0, goldenBags: 0,
+      shieldInSack: false, heartProt: false, pendingCombo: null,
+      index: i
+    }))
+  };
+  await db.ref(`rooms/${currentRoomId}`).update(gameState);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CARD DEFINITIONS
+// ═══════════════════════════════════════════════════════════
+const SUITS = {
+  coins:  { name:'Monedas',           icon:'🪙', cls:'suit-coins'  },
+  crafts: { name:'Artesanías',        icon:'⚒️', cls:'suit-crafts' },
+  jewels: { name:'Joyas',             icon:'💎', cls:'suit-jewels' },
+  gems:   { name:'Piedras Preciosas', icon:'🔮', cls:'suit-gems'   }
+};
+const SK = ['coins','crafts','jewels','gems'];
+
+function buildDeck() {
+  let id = 0, cards = [];
+  SK.forEach(suit => {
+    for (let n = 2; n <= 10; n++) cards.push({ id: id++, type: 'treasure', suit, num: n });
+    ['J','Q','K'].forEach(t => cards.push({ id: id++, type: 'tool', suit, tool: t, num: t==='J'?11:t==='Q'?12:13 }));
+    cards.push({ id: id++, type: 'golden', suit, num: 1 });
+  });
+  cards.push({ id: id++, type: 'joker', sub: 'toolbox', num: 0 });
+  cards.push({ id: id++, type: 'joker', sub: 'toolbox', num: 0 });
+  cards.push({ id: id++, type: 'joker', sub: 'shield', num: 0 });
+  return cards;
+}
+
+function shuffle(a) {
+  const arr = [...a];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME STATE & RENDERING
+// ═══════════════════════════════════════════════════════════
+let G = null;  // local copy of game state
+
+function startGame(room) {
+  G = room;
+  localPlayerIndex = G.gamePlayers.findIndex(p => p.uid === currentUser.uid);
+  showScreen('game');
+  listenGameState();
+}
+
+function listenGameState() {
+  const ref = db.ref(`rooms/${currentRoomId}`);
+  const cb = ref.on('value', snap => {
+    if (!snap.exists()) { goLobby(); return; }
+    G = snap.val();
+    if (G.status === 'ended') { showEndScreen(G); return; }
+    localPlayerIndex = G.gamePlayers.findIndex(p => p.uid === currentUser.uid);
+    renderGame();
+  });
+  gameListeners.push({ ref, cb, type: 'value' });
+}
+
+function isMyTurn() {
+  if (!G || localPlayerIndex < 0) return false;
+  return G.currentPlayerIndex === localPlayerIndex;
+}
+
+function cp() {
+  return G.gamePlayers[G.currentPlayerIndex];
+}
+
+function me() {
+  return G.gamePlayers[localPlayerIndex];
+}
+
+// ── GAME VALIDATION ──
+function sackValid(p) {
+  const sz = G.config.sackSize;
+  if (!p.sack || p.sack.length < sz) return false;
+  if (!G.config.foolsGold) {
+    const nonT = p.sack.filter(c => c && c.type !== 'treasure' && c.type !== 'golden');
+    if (nonT.length > 0) return false;
+    return checkFormation(p.sack, G.config.mode);
+  }
+  return true;
+}
+
+function checkFormation(cards, mode) {
+  const t = (cards || []).filter(c => c && (c.type === 'treasure' || c.type === 'golden'));
+  if (t.length < 2) return false;
+  if (mode === 'seq') return isSeq(t);
+  if (mode === 'set') return isSet(t);
+  return isSeq(t) || isSet(t) || isMixed(t);
+}
+
+function isSeq(cards) {
+  const nums = cards.filter(c => c.type === 'treasure').map(c => c.num).sort((a,b) => a-b);
+  let aces = cards.filter(c => c.type === 'golden').length;
+  for (let i = 1; i < nums.length; i++) {
+    const gap = nums[i] - nums[i-1] - 1;
+    if (gap < 0) return false;
+    aces -= gap;
+    if (aces < 0) return false;
+  }
+  return true;
+}
+
+function isSet(cards) {
+  const nums = cards.filter(c => c.type === 'treasure').map(c => c.num);
+  return [...new Set(nums)].length <= 1;
+}
+
+function isMixed(cards) {
+  if (cards.length < 4) return false;
+  for (let s = 2; s <= cards.length-2; s++) {
+    const combos = getCombos(cards, s);
+    for (const g1 of combos) {
+      const g2 = cards.filter(c => !g1.includes(c));
+      if ((isSeq(g1)||isSet(g1)) && (isSeq(g2)||isSet(g2))) return true;
+    }
+  }
+  return false;
+}
+
+function getCombos(arr, k) {
+  if (k === 0) return [[]];
+  if (!arr.length) return [];
+  const [h, ...t] = arr;
+  return [...getCombos(t, k-1).map(c => [h,...c]), ...getCombos(t, k)];
+}
+
+function calcScore(p) {
+  const treasures = (p.sack||[]).filter(c => c && c.type === 'treasure');
+  const aces = (p.sack||[]).filter(c => c && c.type === 'golden');
+  const allT = [...treasures, ...aces];
+  let s = allT.length;
+  const len = Math.min(allT.length, 4);
+  if (len >= 3 && (isSeq(allT) || isSet(allT))) s = len * 2;
+  return s;
+}
+
+function cName(c) {
+  if (!c) return '?';
+  if (c.type === 'joker') return c.sub === 'shield' ? 'Escudo' : 'Caja de Herramientas';
+  if (c.type === 'golden') return `As de ${SUITS[c.suit].name}`;
+  if (c.type === 'tool') return { J:'Daga', Q:'Binoculares', K:'Trueque' }[c.tool] + ` de ${SUITS[c.suit].name}`;
+  return `${c.num} de ${SUITS[c.suit].name}`;
+}
+
+function getSuitCls(c) {
+  if (!c) return '';
+  if (c.type === 'joker') return 'suit-joker';
+  if (c.type === 'tool') return 'suit-tool';
+  if (c.type === 'golden') return 'suit-golden';
+  return SUITS[c.suit]?.cls || '';
+}
+
+function cardHTML(c, opts = {}) {
+  const { small, clickable, selected } = opts;
+  if (!c) return `<div class="card empty-slot"><span style="color:var(--text-muted);font-size:1.2rem">+</span></div>`;
+  const cls = [
+    'card',
+    getSuitCls(c),
+    clickable ? 'clickable' : '',
+    selected ? 'selected' : '',
+    small ? '' : ''
+  ].filter(Boolean).join(' ');
+  let inner = '';
+  if (c.type === 'joker') {
+    inner = `<span class="card-icon">${c.sub === 'shield' ? '🛡️' : '🧰'}</span><span class="card-lbl">${c.sub === 'shield' ? 'Escudo' : 'Caja'}</span>`;
+  } else if (c.type === 'tool') {
+    const icons = {J:'⚔️', Q:'🔭', K:'🔄'};
+    inner = `<span class="card-num">${c.tool}</span><span class="card-icon">${icons[c.tool]}</span>`;
+  } else if (c.type === 'golden') {
+    inner = `<span class="card-num">A</span><span class="card-icon">${SUITS[c.suit].icon}</span><span class="card-lbl">ATIO</span>`;
+  } else {
+    const icon = SUITS[c.suit].icon;
+    const gemsCount = Math.min(c.num, 6);
+    const gems = icon.repeat(gemsCount);
+    inner = `<span class="card-num">${c.num}</span><span class="card-icon">${icon}</span><span class="card-gems">${gems}</span>`;
+  }
+  return `<div class="${cls}">${inner}</div>`;
+}
+
+function facedownCard(small) {
+  const w = small ? '40px' : '58px';
+  const h = small ? '56px' : '82px';
+  return `<div class="card facedown" style="width:${w};height:${h}"><span class="card-face-back">⚜</span></div>`;
+}
+
+// ── GAME RENDER ──
+function renderGame() {
+  if (!G) return;
+  renderScorePills();
+  renderGameBody();
+}
+
+function renderScorePills() {
+  const pills = (G.gamePlayers||[]).map((p, i) => {
+    const isMe = p.uid === currentUser.uid;
+    const isActive = i === G.currentPlayerIndex;
+    const cls = isMe ? 'score-pill myturn' : isActive ? 'score-pill active' : 'score-pill';
+    return `<div class="${cls}">${isMe ? '⚜ ' : ''}${p.name.split(' ')[0]}<span class="score-pill-pts">${p.score}</span>${p.shieldInSack ? '🛡️' : ''}</div>`;
+  }).join('');
+  document.getElementById('scorePills').innerHTML = pills;
+}
+
+function renderGameBody() {
+  const myTurn = isMyTurn();
+  const p = me();
+  const ap = cp();
+  const body = document.getElementById('gameBody');
+  let html = '';
+
+  // Turn banner
+  if (G.frenzy) {
+    html += `<div class="turn-banner frenzy">⚡ FRENESÍ — ${myTurn ? 'Tu turno' : `Turno de ${ap.name.split(' ')[0]}`}</div>`;
+  } else if (myTurn) {
+    html += `<div class="turn-banner my-turn">⚜ Tu turno${ap.pendingCombo ? ` — Combo ${SUITS[ap.pendingCombo]?.name}` : ''}${ap.heartProt ? ' — ❤️ Protegido' : ''}</div>`;
+  } else {
+    html += `<div class="turn-banner waiting-turn">Turno de ${ap.name.split(' ')[0]}${ap.pendingCombo ? ` (Combo ${SUITS[ap.pendingCombo]?.name})` : ''}</div>`;
+  }
+
+  // Phase bar (only show on my turn)
+  if (myTurn) {
+    const phases = G.frenzy ? ['take','discard','fin'] : ['saque','combo','take','tool','discard','fin'];
+    const labels = {saque:'Saque',combo:'Combo',take:'Tomar',tool:'Herramienta',discard:'Botar',fin:'Fin'};
+    const cur = G.phase === 'done' ? 'fin' : G.phase;
+    const ci = phases.indexOf(cur);
+    const phaseBar = phases.map((ph, i) => {
+      const cls = i < ci ? 'done' : i === ci ? 'cur' : '';
+      return `<span class="phase-tag ${cls}">${labels[ph]}</span>`;
+    }).join('');
+    html += `<div class="phase-bar">${phaseBar}</div>`;
+  }
+
+  // My sack
+  const mySack = p ? (p.sack || []) : [];
+  const sackSize = G.config.sackSize;
+  let sackSlots = '';
+  for (let i = 0; i < sackSize; i++) {
+    const c = mySack[i];
+    if (!c) {
+      sackSlots += `<div class="card empty-slot"><span style="color:var(--text-muted);font-size:1rem">+</span></div>`;
+    } else {
+      const canDo = myTurn && (G.phase === 'discard' || G.phase === 'tool' || G.phase === 'done');
+      const canSwap = myTurn && (G.phase === 'discard' || G.phase === 'tool') && G.takenCard;
+      const faceupDot = i === 0 ? `<div style="position:absolute;top:2px;right:3px;font-size:8px;color:var(--text-dim)">👁</div>` : '';
+      const discardBtn = canDo ? `<button class="mini-btn mini-discard" onclick="actDiscardFromSack(${i})">✕</button>` : '';
+      const swapBtn = canSwap ? `<button class="mini-btn mini-swap" onclick="actExchange(${i})">⇄</button>` : '';
+      sackSlots += `<div class="card ${getSuitCls(c)} ${myTurn&&canDo?'clickable':''}" style="position:relative">
+        ${faceupDot}
+        ${c.type === 'joker' ? `<span class="card-icon">${c.sub==='shield'?'🛡️':'🧰'}</span><span class="card-lbl">${c.sub==='shield'?'Escudo':'Caja'}</span>` :
+          c.type === 'tool' ? `<span class="card-num">${c.tool}</span><span class="card-icon">${{J:'⚔️',Q:'🔭',K:'🔄'}[c.tool]}</span>` :
+          c.type === 'golden' ? `<span class="card-num">A</span><span class="card-icon">${SUITS[c.suit].icon}</span><span class="card-lbl">ATIO</span>` :
+          `<span class="card-num">${c.num}</span><span class="card-icon">${SUITS[c.suit].icon}</span><span class="card-gems">${SUITS[c.suit].icon.repeat(Math.min(c.num,6))}</span>`}
+        ${discardBtn}${swapBtn}
+      </div>`;
+    }
+  }
+
+  html += `<div class="panel ${myTurn ? 'active-panel' : ''}">
+    <div class="panel-label">Mi Saco (${mySack.length}/${sackSize})</div>
+    <div class="cards-row">${sackSlots}</div>`;
+
+  // Taken card
+  if (myTurn && G.takenCard) {
+    const c = G.takenCard;
+    const full = mySack.length >= sackSize;
+    html += `<div style="margin-top:0.65rem">
+      <div class="panel-label">Carta tomada</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        ${cardHTML(c)}
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <button class="btn btn-green" ${full?'disabled':''} onclick="actKeep()">✚ Guardar</button>
+          <button class="btn btn-red" onclick="actDiscardTaken()">✕ Botar</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Action buttons
+  if (myTurn) {
+    const myP = cp();
+    const isSaque = G.phase === 'saque';
+    const isTake = G.phase === 'take';
+    const isTool = G.phase === 'tool' || G.phase === 'discard';
+    const isDone = G.phase === 'done';
+    const hasJ = (myP.sack||[]).some(c=>c&&c.type==='tool'&&c.tool==='J')||(G.takenCard&&G.takenCard.type==='tool'&&G.takenCard.tool==='J');
+    const hasQ = (myP.sack||[]).some(c=>c&&c.type==='tool'&&c.tool==='Q')||(G.takenCard&&G.takenCard.type==='tool'&&G.takenCard.tool==='Q');
+    const hasK = (myP.sack||[]).some(c=>c&&c.type==='tool'&&c.tool==='K')||(G.takenCard&&G.takenCard.type==='tool'&&G.takenCard.tool==='K');
+    const hasTB = (myP.sack||[]).some(c=>c&&c.type==='joker'&&c.sub==='toolbox')||(G.takenCard&&G.takenCard.type==='joker'&&G.takenCard.sub==='toolbox');
+    let btns = '<div class="actions">';
+    if (isSaque && !G.frenzy) {
+      btns += `<button class="btn ${sackValid(myP)?'btn-gold':''}" onclick="actSaque()" ${sackValid(myP)?'':'disabled'}>🏆 Saque</button>`;
+      btns += `<button class="btn btn-blue" onclick="actCombo()">✦ Combo</button>`;
+      btns += `<button class="btn btn-dim" onclick="actTake()">⛏ Tomar →</button>`;
+    }
+    if (isTake && !G.frenzy) btns += `<button class="btn btn-gold" onclick="actTake()">⛏ Tomar de Mina</button>`;
+    if (isTake && G.frenzy) btns += `<button class="btn btn-gold" onclick="actFrenzyTake()">⛏ Tomar 2 cartas</button>`;
+    if (isTool) {
+      if (hasJ) btns += `<button class="btn btn-red" onclick="actUseJ()">⚔ Daga (J)</button>`;
+      if (hasQ) btns += `<button class="btn btn-blue" onclick="actUseQ()">🔭 Binoc. (Q)</button>`;
+      if (hasK) btns += `<button class="btn btn-blue" onclick="actUseK()">🔄 Trueque (K)</button>`;
+      if (hasTB) btns += `<button class="btn btn-blue" onclick="actUseToolbox()">🧰 Caja</button>`;
+    }
+    if (isTool || isDone) btns += `<button class="btn btn-dim" onclick="actEndTurn()">→ Fin de turno</button>`;
+    btns += '</div>';
+    html += btns;
+  }
+  html += '</div>';
+
+  // Mine + Discard
+  const topDiscard = G.discard && G.discard.length > 0 ? G.discard[G.discard.length-1] : null;
+  html += `<div class="two-col">
+    <div class="panel">
+      <div class="panel-label">⛏ La Mina</div>
+      ${facedownCard(false)}
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">${(G.deck||[]).length} cartas</div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">🗑 La Cubeta</div>
+      ${topDiscard ? cardHTML(topDiscard) : '<span style="font-size:0.8rem;color:var(--text-muted)">Vacía</span>'}
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">${(G.discard||[]).length} cartas</div>
+    </div>
+  </div>`;
+
+  // Opponents
+  const opponents = (G.gamePlayers||[]).filter(p => p.uid !== currentUser.uid);
+  if (opponents.length > 0) {
+    const rw = G.roundWinners || [];
+    html += `<div class="${opponents.length <= 2 ? 'two-col' : 'three-col'}">`;
+    opponents.forEach(op => {
+      const isActive = G.gamePlayers.indexOf(op) === G.currentPlayerIndex;
+      const isDone = rw.includes(G.gamePlayers.findIndex(p=>p.uid===op.uid));
+      const sack = op.sack || [];
+      let cards = sack.map((c, i) => {
+        if (!c) return '';
+        if (i === 0) {
+          const sc = getSuitCls(c);
+          const ic = c.type==='joker' ? (c.sub==='shield'?'🛡️':'🧰') : c.type==='tool' ? {J:'⚔️',Q:'🔭',K:'🔄'}[c.tool] : c.type==='golden' ? SUITS[c.suit].icon : SUITS[c.suit].icon;
+          const nm = c.type==='treasure'||c.type==='golden' ? (c.type==='golden'?'A':c.num) : c.tool||c.sub;
+          return `<div class="mini-card ${sc}" style="width:40px;height:56px">
+            <span style="font-size:0.75rem;font-family:Cinzel,serif;font-weight:700;color:inherit">${nm}</span>
+            <span style="font-size:0.85rem">${ic}</span>
+          </div>`;
+        }
+        return facedownCard(true);
+      }).join('');
+      const emptySlots = Array(Math.max(0, G.config.sackSize - sack.length)).fill(`<div class="mini-card" style="width:40px;height:56px;border-color:var(--text-muted);border-style:dashed;opacity:0.3"></div>`).join('');
+      html += `<div class="opp-card ${isActive?'active-opp':''}" style="${isDone?'opacity:0.5':''}">
+        <div class="opp-header">
+          <span class="opp-name">${op.name.split(' ')[0]}${op.shieldInSack?' 🛡️':''}${isDone?' ✔':''}</span>
+          <span class="opp-pts">${op.score}pts</span>
+        </div>
+        <div class="cards-row">${cards}${emptySlots}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Log
+  const logs = (G.log || []).slice(0, 8);
+  html += `<div class="panel">
+    <div class="panel-label">Registro</div>
+    <div class="log-box">${logs.map(e=>`<div class="log-entry ev-${e.ev||''}">${e.msg}</div>`).join('')}</div>
+  </div>`;
+
+  body.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAME ACTIONS — Write to Firebase
+// ═══════════════════════════════════════════════════════════
+function updateGame(updates) {
+  if (!currentRoomId) return Promise.resolve();
+  return db.ref(`rooms/${currentRoomId}`).update(updates);
+}
+
+function addLog(msg, ev = '') {
+  const logs = [...(G.log || [])];
+  logs.unshift({ msg, ev, ts: Date.now() });
+  if (logs.length > 40) logs.length = 40;
+  return logs;
+}
+
+function drawCard(state) {
+  let deck = [...(state.deck || [])];
+  let discard = [...(state.discard || [])];
+  if (deck.length === 0) {
+    if (discard.length === 0) return { card: null, deck, discard };
+    deck = shuffle([...discard]);
+    discard = [];
+    state.log = addLogToState(state, 'Mina agotada — Cubeta barajada.', 'action');
+  }
+  const card = deck.pop();
+  return { card, deck, discard };
+}
+
+function addLogToState(state, msg, ev) {
+  const logs = [...(state.log || [])];
+  logs.unshift({ msg, ev, ts: Date.now() });
+  if (logs.length > 40) logs.length = 40;
+  return logs;
+}
+
+function updateShield(p) {
+  p.shieldInSack = (p.sack || []).some(c => c && c.type === 'joker' && c.sub === 'shield');
+}
+
+// All actions operate on a local copy of G and then push to Firebase
+function withState(fn) {
+  if (!isMyTurn()) return;
+  const state = JSON.parse(JSON.stringify(G));
+  fn(state);
+  db.ref(`rooms/${currentRoomId}`).set(state);
+}
+
+function actSaque() {
+  if (!isMyTurn()) return;
+  const p = G.gamePlayers[localPlayerIndex];
+  if (!sackValid(p)) { showInfo('Saco inválido', 'Tu saco no está completo o no cumple la modalidad.'); return; }
+  // Check attackers
+  const attackers = G.gamePlayers.filter((o, i) => i !== localPlayerIndex && (o.sack||[]).some(c=>c&&c.type==='tool'&&c.tool==='J'));
+  if (attackers.length > 0 && !G.frenzy) {
+    showSaqueModal(p, attackers);
+  } else {
+    doConfirmSaque(false);
+  }
+}
+
+function showSaqueModal(sp, attackers) {
+  const btns = attackers.map(a => `<button class="btn btn-red" onclick="doCancelSaque(${G.gamePlayers.findIndex(p=>p.uid===a.uid)});closeModal()"">⚔ ${a.name.split(' ')[0]} cancela</button>`).join('');
+  showModal(`
+    <div class="modal-title">¡${sp.name.split(' ')[0]} canta Saque!</div>
+    <div class="modal-body">${attackers.map(a=>a.name.split(' ')[0]).join(', ')} tiene${attackers.length>1?'n':''} una Daga.</div>
+    <div class="modal-btns">${btns}<button class="btn btn-gold" onclick="doConfirmSaque(false);closeModal()">Nadie cancela</button></div>
+  `);
+}
+
+function doCancelSaque(oppIdx) {
+  closeModal();
+  withState(state => {
+    const opp = state.gamePlayers[oppIdx];
+    const sp = state.gamePlayers[localPlayerIndex];
+    if (sp.shieldInSack) {
+      const si = sp.sack.findIndex(c => c && c.type === 'joker' && c.sub === 'shield');
+      if (si !== -1) { state.discard.push(sp.sack.splice(si, 1)[0]); updateShield(sp); }
+      state.log = addLogToState(state, `${sp.name.split(' ')[0]} usa Escudo — Daga bloqueada.`, 'action');
+      doConfirmSaqueOnState(state, false);
+      return;
+    }
+    const spJi = sp.sack.findIndex(c => c && c.type === 'tool' && c.tool === 'J');
+    if (spJi !== -1) {
+      showModal(`
+        <div class="modal-title">¿Responder con Daga?</div>
+        <div class="modal-body">¿Usás tu J para anular la de ${opp.name.split(' ')[0]}?</div>
+        <div class="modal-btns">
+          <button class="btn btn-blue" onclick="doRespondJ(${oppIdx});closeModal()">Sí, anular</button>
+          <button class="btn btn-red" onclick="doExecCancelSaque(${oppIdx});closeModal()">No, acepto</button>
+        </div>
+      `);
+      return;
+    }
+    doExecCancelSaque(oppIdx);
+  });
+}
+
+function doRespondJ(oppIdx) {
+  withState(state => {
+    const sp = state.gamePlayers[localPlayerIndex];
+    const opp = state.gamePlayers[oppIdx];
+    const si = sp.sack.findIndex(c => c && c.type === 'tool' && c.tool === 'J');
+    const oi = opp.sack.findIndex(c => c && c.type === 'tool' && c.tool === 'J');
+    if (si !== -1) state.discard.push(sp.sack.splice(si, 1)[0]);
+    if (oi !== -1) state.discard.push(opp.sack.splice(oi, 1)[0]);
+    state.log = addLogToState(state, `Ambas dagas se anulan — ¡Saque sigue!`, 'action');
+    doConfirmSaqueOnState(state, false);
+  });
+}
+
+function doExecCancelSaque(oppIdx) {
+  withState(state => {
+    const opp = state.gamePlayers[oppIdx];
+    const sp = state.gamePlayers[localPlayerIndex];
+    const ji = opp.sack.findIndex(c => c && c.type === 'tool' && c.tool === 'J');
+    if (ji !== -1) state.discard.push(opp.sack.splice(ji, 1)[0]);
+    state.log = addLogToState(state, `${opp.name.split(' ')[0]} cancela el Saque de ${sp.name.split(' ')[0]}.`, 'attack');
+    // Must discard 1 card — show picker first
+    const cards = sp.sack.map((c,i) => c ? `<div class="card ${getSuitCls(c)} clickable" onclick="doDiscardForCancel(${i})">${cardHTML(c).replace(/^<div[^>]*>/,'').replace(/<\/div>$/, '')}</div>` : '').join('');
+    closeModal();
+    showModal(`<div class="modal-title">Descartá 1 carta</div><div class="modal-cards">${sp.sack.map((c,i)=>c?cardHTML({...c},{}):'' ).join('')}</div>`);
+    // Rebuild with onclick
+    const mc = document.querySelector('#modalContent .modal-cards');
+    if (mc) {
+      mc.innerHTML = '';
+      sp.sack.forEach((c,i) => {
+        if (!c) return;
+        const el = document.createElement('div');
+        el.innerHTML = cardHTML(c, {clickable:true});
+        el.firstChild.onclick = () => { closeModal(); doDiscardForCancelIdx(oppIdx, i); };
+        mc.appendChild(el.firstChild);
+      });
+    }
+    // Store pending state
+    window._cancelState = state;
+  });
+}
+
+function doDiscardForCancelIdx(oppIdx, cardIdx) {
+  withState(state => {
+    const sp = state.gamePlayers[localPlayerIndex];
+    if (sp.sack[cardIdx]) { state.discard.push(sp.sack.splice(cardIdx, 1)[0]); updateShield(sp); }
+    state.log = addLogToState(state, `${sp.name.split(' ')[0]} descarta una carta.`, 'action');
+    advanceTurnOnState(state);
+  });
+}
+
+function doConfirmSaque(second) {
+  withState(state => doConfirmSaqueOnState(state, second));
+}
+
+function doConfirmSaqueOnState(state, second) {
+  closeModal();
+  const sp = state.gamePlayers[localPlayerIndex];
+  const rs = calcScore(sp);
+  const bonus = second ? 0 : 3;
+  const total = rs + bonus;
+  sp.score += total;
+  state.log = addLogToState(state, `${sp.name.split(' ')[0]} ${second?'2do':'1er'} ganador — +${bonus}+${rs}=${total}pts`, 'saque');
+  if (state.config.goldSeek && sp.goldenBags >= 4) { endGameOnState(state, sp); return; }
+  if (sp.score >= 40) { endGameOnState(state, sp); return; }
+  if (!second) {
+    state.roundWinners = [...(state.roundWinners||[]), localPlayerIndex];
+    const allIdxs = state.gamePlayers.map((_,i)=>i);
+    const rem = allIdxs.filter(i => !(state.roundWinners||[]).includes(i));
+    if (rem.length <= 2) { startFrenzyOnState(state, rem); }
+    else { state.log = addLogToState(state, 'Buscando 2do ganador...', 'action'); advanceTurnOnState(state); }
+  } else {
+    const allIdxs = state.gamePlayers.map((_,i)=>i);
+    const rem = allIdxs.filter(i => !(state.roundWinners||[]).includes(i));
+    if (rem.length >= 2) startFrenzyOnState(state, rem);
+    else startNewRoundOnState(state);
+  }
+}
+
+function actCombo() {
+  if (!isMyTurn() || G.phase !== 'saque') return;
+  withState(state => {
+    const p = state.gamePlayers[localPlayerIndex];
+    const min = Math.ceil(state.config.sackSize / 2);
+    let found = false;
+    for (const suit of SK) {
+      const m = (p.sack||[]).filter(c => c && c.type === 'treasure' && c.suit === suit);
+      if (m.length >= min) {
+        p.pendingCombo = suit;
+        state.log = addLogToState(state, `${p.name.split(' ')[0]} marca combo de ${SUITS[suit].name}.`, 'action');
+        state.phase = 'take';
+        found = true;
+        break;
+      }
+    }
+    if (!found) { showInfo('Combo inválido', `Necesitás al menos ${Math.ceil(G.config.sackSize/2)} cartas del mismo palo.`); return; }
+  });
+}
+
+function actTake() {
+  if (!isMyTurn() || G.phase !== 'take') return;
+  withState(state => {
+    const p = state.gamePlayers[localPlayerIndex];
+    if (p.pendingCombo) { applyComboOnState(state, p); return; }
+    const { card, deck, discard } = drawCard(state);
+    state.deck = deck; state.discard = discard;
+    if (!card) return;
+    state.takenCard = card;
+    state.log = addLogToState(state, `${p.name.split(' ')[0]} toma una carta.`, 'action');
+    state.phase = (p.sack||[]).length >= state.config.sackSize ? 'discard' : 'tool';
+  });
+}
+
+function applyComboOnState(state, p) {
+  const suit = p.pendingCombo;
+  p.pendingCombo = null;
+  state.log = addLogToState(state, `${p.name.split(' ')[0]} activa combo ${SUITS[suit].name}.`, 'action');
+  if (suit === 'coins') {
+    const r1 = drawCard(state); state.deck = r1.deck; state.discard = r1.discard;
+    const r2 = drawCard(state); state.deck = r2.deck; state.discard = r2.discard;
+    if (!r1.card) { state.phase = 'tool'; return; }
+    if (!r2.card) { state.takenCard = r1.card; state.phase = 'tool'; return; }
+    // Show picker
+    window._comboPending = { c1: r1.card, c2: r2.card, state: JSON.parse(JSON.stringify(state)) };
+    showModal(`
+      <div class="modal-title">♠ Combo Monedas — elegí 1</div>
+      <div class="modal-cards" id="comboPickCards"></div>
+    `);
+    const mc = document.getElementById('comboPickCards');
+    [r1.card, r2.card].forEach((c, idx) => {
+      const el = document.createElement('div');
+      el.innerHTML = cardHTML(c, {clickable:true});
+      el.firstChild.onclick = () => { closeModal(); doPickCombo(idx); };
+      mc.appendChild(el.firstChild);
+    });
+    return;
+  } else if (suit === 'crafts') {
+    if (state.discard.length > 0) {
+      state.takenCard = state.discard.pop();
+      state.log = addLogToState(state, `${p.name.split(' ')[0]} toma de la Cubeta.`, 'action');
+    } else {
+      const r = drawCard(state); state.deck = r.deck; state.discard = r.discard;
+      state.takenCard = r.card;
+    }
+    state.phase = 'tool';
+  } else if (suit === 'gems') {
+    const peek = (state.deck || []).slice(-4).reverse();
+    closeModal();
+    showModal(`
+      <div class="modal-title">🔮 Combo Piedras — próximas cartas</div>
+      <div class="modal-cards">${peek.map(c=>cardHTML(c)).join('')}</div>
+      <div class="modal-btns"><button class="btn btn-gold" onclick="doAfterPeek()">OK</button></div>
+    `);
+    window._pendingPeekState = JSON.parse(JSON.stringify(state));
+    return;
+  } else if (suit === 'jewels') {
+    p.heartProt = true;
+    state.log = addLogToState(state, `${p.name.split(' ')[0]} tiene protección de Corazón.`, 'action');
+    const r = drawCard(state); state.deck = r.deck; state.discard = r.discard;
+    state.takenCard = r.card;
+    state.phase = 'tool';
+  }
+}
+
+window.doPickCombo = function(idx) {
+  const { c1, c2, state } = window._comboPending || {};
+  if (!state) return;
+  state.takenCard = idx === 0 ? c1 : c2;
+  state.discard = [...(state.discard||[]), idx === 0 ? c2 : c1];
+  state.phase = 'tool';
+  state.log = addLogToState(state, `${state.gamePlayers[localPlayerIndex].name.split(' ')[0]} eligió ${cName(state.takenCard)}.`, 'action');
+  db.ref(`rooms/${currentRoomId}`).set(state);
+};
+
+window.doAfterPeek = function() {
+  closeModal();
+  const state = window._pendingPeekState;
+  if (!state) return;
+  const r = drawCard(state); state.deck = r.deck; state.discard = r.discard;
+  state.takenCard = r.card;
+  state.phase = 'tool';
+  db.ref(`rooms/${currentRoomId}`).set(state);
+};
+
+function actUseJ() {
+  if (!isMyTurn()) return;
+  const targets = G.gamePlayers.filter((o,i) => i !== localPlayerIndex && (o.sack||[]).some(Boolean));
+  if (!targets.length) { showInfo('Sin objetivos','Ningún oponente tiene cartas.'); return; }
+  const btns = targets.map(t => {
+    const ti = G.gamePlayers.findIndex(p=>p.uid===t.uid);
+    return `<button class="btn btn-red" onclick="doUseDaggerOn(${ti});closeModal()">⚔ Atacar a ${t.name.split(' ')[0]}</button>`;
+  }).join('');
+  showModal(`<div class="modal-title">⚔ Daga — elegí objetivo</div><div class="modal-btns">${btns}<button class="btn btn-dim" onclick="closeModal()">Cancelar</button></div>`);
+}
+
+function doUseDaggerOn(ti) {
+  withState(state => {
+    const a = state.gamePlayers[localPlayerIndex];
+    const t = state.gamePlayers[ti];
+    if (t.heartProt) {
+      state.log = addLogToState(state, `${t.name.split(' ')[0]} tiene protección — Daga bloqueada.`, 'action');
+      consumeJOnState(state, a); state.phase = 'discard'; return;
+    }
+    if (t.shieldInSack) {
+      const si = t.sack.findIndex(c => c && c.type === 'joker' && c.sub === 'shield');
+      if (si !== -1) { state.discard.push(t.sack.splice(si,1)[0]); updateShield(t); }
+      state.log = addLogToState(state, `${t.name.split(' ')[0]} usa Escudo — Daga bloqueada.`, 'action');
+      consumeJOnState(state, a); state.phase = 'discard'; return;
+    }
+    // Show card picker
+    window._daggerState = { state: JSON.parse(JSON.stringify(state)), ti };
+    closeModal();
+    showModal(`<div class="modal-title">Elegí carta de ${t.name.split(' ')[0]}</div><div class="modal-cards" id="daggerCards"></div><div class="modal-btns"><button class="btn btn-dim" onclick="closeModal()">Cancelar</button></div>`);
+    const mc = document.getElementById('daggerCards');
+    t.sack.forEach((c, ci) => {
+      if (!c) return;
+      const el = document.createElement('div');
+      el.innerHTML = cardHTML(c, {clickable:true});
+      el.firstChild.onclick = () => { closeModal(); doExecDagger(ti, ci); };
+      mc.appendChild(el.firstChild);
+    });
+  });
+}
+
+function doExecDagger(ti, ci) {
+  withState(state => {
+    const a = state.gamePlayers[localPlayerIndex];
+    const t = state.gamePlayers[ti];
+    if (t.sack[ci]) {
+      const removed = t.sack.splice(ci,1)[0];
+      if (t.pendingCombo && removed.suit === t.pendingCombo) { t.pendingCombo = null; }
+      state.discard.push(removed);
+      updateShield(t);
+      state.log = addLogToState(state, `${a.name.split(' ')[0]} usa Daga — ${t.name.split(' ')[0]} pierde ${cName(removed)}.`, 'attack');
+    }
+    consumeJOnState(state, a);
+    state.phase = 'discard';
+  });
+}
+
+function consumeJOnState(state, p) {
+  if (state.takenCard && state.takenCard.type === 'tool' && state.takenCard.tool === 'J') {
+    state.discard.push(state.takenCard); state.takenCard = null;
+  } else {
+    const i = p.sack.findIndex(c => c && c.type === 'tool' && c.tool === 'J');
+    if (i !== -1) state.discard.push(p.sack.splice(i,1)[0]);
+  }
+  const r = drawCard(state); state.deck = r.deck; state.discard = r.discard;
+  if (r.card) state.takenCard = r.card;
+}
+
+function actUseQ() {
+  if (!isMyTurn()) return;
+  const targets = G.gamePlayers.filter((o,i) => i !== localPlayerIndex && (o.sack||[]).some(Boolean));
+  if (!targets.length) { showInfo('Sin objetivos',''); return; }
+  const btns = targets.map(t => {
+    const ti = G.gamePlayers.findIndex(p=>p.uid===t.uid);
+    return `<button class="btn btn-blue" onclick="doUseQ(${ti});closeModal()">🔭 Ver a ${t.name.split(' ')[0]}</button>`;
+  }).join('');
+  showModal(`<div class="modal-title">🔭 Binoculares — ¿a quién?</div><div class="modal-btns">${btns}<button class="btn btn-dim" onclick="closeModal()">Cancelar</button></div>`);
+}
+
+function doUseQ(ti) {
+  withState(state => {
+    const a = state.gamePlayers[localPlayerIndex];
+    const t = state.gamePlayers[ti];
+    if (t.heartProt) {
+      state.log = addLogToState(state, `Binoculares bloqueados por protección.`, 'action');
+      consumeQOnState(state, a); state.phase = 'discard'; return;
+    }
+    let show = [];
+    const golds = (t.sack||[]).filter(c => c && c.type === 'golden');
+    const jokers = (t.sack||[]).filter(c => c && c.type === 'joker');
+    const tools = (t.sack||[]).filter(c => c && c.type === 'tool');
+    if (golds.length) show = [golds[0]];
+    else if (jokers.length) show = [jokers[0]];
+    else if (tools.length) show = [tools[0]];
+    else show = (t.sack||[]).filter(Boolean).slice(0,2);
+    consumeQOnState(state, a);
+    state.phase = 'discard';
+    state.log = addLogToState(state, `${a.name.split(' ')[0]} usa Binoculares en ${t.name.split(' ')[0]}.`, 'action');
+    // Show result before committing
+    closeModal();
+    showModal(`
+      <div class="modal-title">Saco de ${t.name.split(' ')[0]}</div>
+      <div class="modal-cards">${show.map(c=>cardHTML(c)).join('')}</div>
+      <div class="modal-btns"><button class="btn btn-gold" onclick="closeModal()">OK</button></div>
+    `);
+    db.ref(`rooms/${currentRoomId}`).set(state);
+  });
+}
+
+function consumeQOnState(state, p) {
+  if (state.takenCard && state.takenCard.type === 'tool' && state.takenCard.tool === 'Q') {
+    state.discard.push(state.takenCard); state.takenCard = null;
+  } else {
+    const i = p.sack.findIndex(c => c && c.type === 'tool' && c.tool === 'Q');
+    if (i !== -1) state.discard.push(p.sack.splice(i,1)[0]);
+  }
+  const r = drawCard(state); state.deck = r.deck; state.discard = r.discard;
+  if (r.card) state.takenCard = r.card;
+}
+
+function actUseK() {
+  if (!isMyTurn()) return;
+  const targets = G.gamePlayers.filter((o,i) => i !== localPlayerIndex && (o.sack||[]).some(Boolean));
+  if (!targets.length) { showInfo('Sin objetivos',''); return; }
+  const btns = targets.map(t => {
+    const ti = G.gamePlayers.findIndex(p=>p.uid===t.uid);
+    return `<button class="btn btn-blue" onclick="doUseTrueque(${ti});closeModal()">🔄 Con ${t.name.split(' ')[0]}</button>`;
+  }).join('');
+  showModal(`<div class="modal-title">🔄 Trueque — ¿con quién?</div><div class="modal-btns">${btns}<button class="btn btn-dim" onclick="closeModal()">Cancelar</button></div>`);
+}
+
+function doUseTrueque(ti) {
+  withState(state => {
+    const a = state.gamePlayers[localPlayerIndex];
+    const t = state.gamePlayers[ti];
+    if (t.heartProt) {
+      state.log = addLogToState(state, `Trueque bloqueado por protección.`, 'action');
+      consumeKOnState(state, a); state.phase = 'discard'; return;
+    }
+    const faceup = (t.sack||[])[0];
+    if (faceup) {
+      window._truequeState = { state: JSON.parse(JSON.stringify(state)), ti };
+      closeModal();
+      showModal(`
+        <div class="modal-title">🔄 Carta boca arriba de ${t.name.split(' ')[0]}</div>
+        <div class="modal-cards">${cardHTML(faceup)}</div>
+        <div class="modal-btns">
+          <button class="btn btn-green" onclick="doTakeFaceup(${ti})">Tomar gratis</button>
+          <button class="btn btn-blue" onclick="showBlindTrueque(${ti})">Intercambio ciego</button>
+        </div>
+      `);
+      return;
+    }
+    showBlindTrueque(ti);
+  });
+}
+
+window.doTakeFaceup = function(ti) {
+  closeModal();
+  withState(state => {
+    const a = state.gamePlayers[localPlayerIndex];
+    const t = state.gamePlayers[ti];
+    const c = t.sack.shift();
+    if (c) { state.takenCard = c; state.log = addLogToState(state, `${a.name.split(' ')[0]} toma carta boca arriba de ${t.name.split(' ')[0]}.`, 'action'); }
+    consumeKOnState(state, a); state.phase = 'discard';
+  });
+};
+
+window.showBlindTrueque = function(ti) {
+  closeModal();
+  const myP = G.gamePlayers[localPlayerIndex];
+  showModal(`
+    <div class="modal-title">Trueque ciego — elegí tu carta</div>
+    <div class="modal-cards" id="truequeCards"></div>
+    <div class="modal-btns"><button class="btn btn-dim" onclick="closeModal()">Cancelar</button></div>
+  `);
+  const mc = document.getElementById('truequeCards');
+  (myP.sack||[]).forEach((c, ci) => {
+    if (!c) return;
+    const el = document.createElement('div');
+    el.innerHTML = cardHTML(c, {clickable:true});
+    el.firstChild.onclick = () => { closeModal(); doExecTrueque(ti, ci); };
+    mc.appendChild(el.firstChild);
+  });
+};
+
+function doExecTrueque(ti, myci) {
+  withState(state => {
+    const a = state.gamePlayers[localPlayerIndex];
+    const t = state.gamePlayers[ti];
+    const tci = (t.sack||[]).findIndex(Boolean);
+    const ac = a.sack.splice(myci,1)[0];
+    const tc = t.sack.splice(tci,1)[0];
+    if (ac) t.sack.push(ac);
+    if (tc) state.takenCard = tc;
+    updateShield(a); updateShield(t);
+    state.log = addLogToState(state, `${a.name.split(' ')[0]} hace Trueque ciego con ${t.name.split(' ')[0]}.`, 'action');
+    consumeKOnState(state, a); state.phase = 'discard';
+  });
+}
+
+function consumeKOnState(state, p) {
+  if (state.takenCard && state.takenCard.type === 'tool' && state.takenCard.tool === 'K') {
+    state.discard.push(state.takenCard); state.takenCard = null;
+  } else {
+    const i = p.sack.findIndex(c => c && c.type === 'tool' && c.tool === 'K');
+    if (i !== -1) state.discard.push(p.sack.splice(i,1)[0]);
+  }
+  const r = drawCard(state); state.deck = r.deck; state.discard = r.discard;
+  if (r.card) state.takenCard = r.card;
+}
+
+function actUseToolbox() {
+  showModal(`
+    <div class="modal-title">🧰 Caja de Herramientas</div>
+    <div class="modal-btns">
+      <button class="btn btn-red" onclick="doToolboxAs('J');closeModal()">⚔ Como Daga (J)</button>
+      <button class="btn btn-blue" onclick="doToolboxAs('Q');closeModal()">🔭 Como Binoculares (Q)</button>
+      <button class="btn btn-blue" onclick="doToolboxAs('K');closeModal()">🔄 Como Trueque (K)</button>
+      <button class="btn btn-dim" onclick="closeModal()">Cancelar</button>
+    </div>
+  `);
+}
+
+window.doToolboxAs = function(tool) {
+  withState(state => {
+    const p = state.gamePlayers[localPlayerIndex];
+    const conv = c => ({...c, type:'tool', tool});
+    if (state.takenCard && state.takenCard.type === 'joker' && state.takenCard.sub === 'toolbox') {
+      state.takenCard = conv(state.takenCard);
+    } else {
+      const i = p.sack.findIndex(c => c && c.type === 'joker' && c.sub === 'toolbox');
+      if (i !== -1) p.sack[i] = conv(p.sack[i]);
+    }
+  });
+  if (tool === 'J') actUseJ();
+  else if (tool === 'Q') actUseQ();
+  else actUseK();
+};
+
+function actKeep() {
+  if (!isMyTurn() || !G.takenCard) return;
+  withState(state => {
+    const p = state.gamePlayers[localPlayerIndex];
+    if ((p.sack||[]).length >= state.config.sackSize) { showInfo('Saco lleno','Debés botar o intercambiar.'); return; }
+    p.sack = [...(p.sack||[]), state.takenCard];
+    updateShield(p);
+    state.log = addLogToState(state, `${p.name.split(' ')[0]} guarda ${cName(state.takenCard)}.`, 'action');
+    state.takenCard = null;
+    state.phase = 'discard';
+  });
+}
+
+function actDiscardTaken() {
+  if (!isMyTurn() || !G.takenCard) return;
+  withState(state => {
+    state.discard.push(state.takenCard);
+    state.log = addLogToState(state, `${state.gamePlayers[localPlayerIndex].name.split(' ')[0]} descarta la carta tomada.`, 'action');
+    state.takenCard = null;
+    state.phase = 'done';
+  });
+}
+
+function actDiscardFromSack(idx) {
+  if (!isMyTurn()) return;
+  withState(state => {
+    const p = state.gamePlayers[localPlayerIndex];
+    if (!p.sack[idx]) return;
+    state.discard.push(p.sack.splice(idx,1)[0]);
+    updateShield(p);
+    if (state.takenCard && (p.sack||[]).length < state.config.sackSize) {
+      p.sack.push(state.takenCard);
+      updateShield(p);
+      state.takenCard = null;
+    }
+    state.log = addLogToState(state, `${p.name.split(' ')[0]} descarta del Saco.`, 'action');
+    state.phase = 'done';
+  });
+}
+
+function actExchange(si) {
+  if (!isMyTurn() || !G.takenCard) return;
+  withState(state => {
+    const p = state.gamePlayers[localPlayerIndex];
+    if (!p.sack[si]) return;
+    const out = p.sack.splice(si, 1, state.takenCard)[0];
+    state.discard.push(out);
+    updateShield(p);
+    state.log = addLogToState(state, `${p.name.split(' ')[0]} intercambia ${cName(state.takenCard)} por ${cName(out)}.`, 'action');
+    state.takenCard = null;
+    state.phase = 'done';
+  });
+}
+
+function actFrenzyTake() {
+  if (!isMyTurn() || G.phase !== 'take') return;
+  withState(state => {
+    const p = state.gamePlayers[localPlayerIndex];
+    const r1 = drawCard(state); state.deck = r1.deck; state.discard = r1.discard;
+    const r2 = drawCard(state); state.deck = r2.deck; state.discard = r2.discard;
+    if (!r1.card) return;
+    const sackLen = (p.sack||[]).length;
+    if (sackLen < state.config.sackSize) {
+      p.sack = [...(p.sack||[]), r1.card];
+      updateShield(p);
+      if (r2.card && p.sack.length < state.config.sackSize) { p.sack.push(r2.card); updateShield(p); }
+      else if (r2.card) state.discard.push(r2.card);
+      state.log = addLogToState(state, `${p.name.split(' ')[0]} toma cartas en Frenesí.`, 'action');
+      state.phase = 'discard';
+    } else {
+      state.takenCard = r1.card;
+      if (r2.card) state.discard.push(r2.card);
+      state.phase = 'discard';
+      state.log = addLogToState(state, `${p.name.split(' ')[0]} toma en Frenesí.`, 'action');
+    }
+  });
+}
+
+function actEndTurn() {
+  if (!isMyTurn()) return;
+  withState(state => {
+    const p = state.gamePlayers[localPlayerIndex];
+    if (state.takenCard && (p.sack||[]).length < state.config.sackSize) {
+      p.sack = [...(p.sack||[]), state.takenCard];
+      updateShield(p);
+      state.log = addLogToState(state, `${p.name.split(' ')[0]} guarda ${cName(state.takenCard)}.`, 'action');
+      state.takenCard = null;
+      state.phase = 'done';
+    } else if (state.takenCard) {
+      state.discard.push(state.takenCard);
+      state.takenCard = null;
+      state.phase = 'done';
+    }
+    p.heartProt = false;
+    advanceTurnOnState(state);
+  });
+}
+
+function advanceTurnOnState(state) {
+  const cur = state.gamePlayers[state.currentPlayerIndex];
+  if (cur) cur.heartProt = false;
+  state.takenCard = null;
+  state.phase = 'saque';
+  const rw = state.roundWinners || [];
+  if (state.frenzy) {
+    const fi = (state.frenzyPlayerIndices||[]).indexOf(state.currentPlayerIndex);
+    const next = fi < 0 ? (state.frenzyPlayerIndices||[])[0] : (state.frenzyPlayerIndices||[])[(fi+1)%(state.frenzyPlayerIndices||[]).length];
+    state.currentPlayerIndex = next !== undefined ? next : 0;
+    state.phase = 'take';
+  } else {
+    let next = (state.currentPlayerIndex + 1) % state.gamePlayers.length;
+    let tries = 0;
+    while (rw.includes(next) && tries < state.gamePlayers.length) { next = (next+1)%state.gamePlayers.length; tries++; }
+    state.currentPlayerIndex = next;
+  }
+}
+
+function startFrenzyOnState(state, ids) {
+  state.log = addLogToState(state, '¡FRENESÍ! Solo quedan 2 jugadores.', 'saque');
+  state.frenzy = true;
+  state.frenzyPlayerIndices = ids;
+  const all = [...(state.deck||[]), ...(state.discard||[])];
+  state.gamePlayers.forEach(p => { all.push(...(p.sack||[]).filter(Boolean)); p.sack = []; p.shieldInSack = false; p.pendingCombo = null; });
+  state.deck = shuffle(all);
+  state.discard = [];
+  state.currentPlayerIndex = ids[0];
+  state.phase = 'take';
+}
+
+function startNewRoundOnState(state) {
+  state.roundNum = (state.roundNum || 1) + 1;
+  state.roundWinners = [];
+  state.frenzy = false;
+  state.frenzyPlayerIndices = [];
+  const loser = state.gamePlayers.reduce((a,b) => a.score < b.score ? a : b);
+  state.currentPlayerIndex = state.gamePlayers.indexOf(loser);
+  const all = [...(state.deck||[]), ...(state.discard||[])];
+  state.gamePlayers.forEach(p => { all.push(...(p.sack||[]).filter(Boolean)); p.sack = []; p.shieldInSack = false; p.pendingCombo = null; p.heartProt = false; });
+  state.deck = shuffle(all);
+  state.discard = [];
+  state.takenCard = null;
+  state.phase = 'saque';
+  state.log = addLogToState(state, `=== Ronda ${state.roundNum} ===`, 'saque');
+}
+
+function endGameOnState(state, winner) {
+  state.status = 'ended';
+  state.winner = winner.uid;
+  state.log = addLogToState(state, `¡${winner.name.split(' ')[0]} gana la partida!`, 'saque');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  END & MODAL
+// ═══════════════════════════════════════════════════════════
+function showEndScreen(room) {
+  removeRoomListeners();
+  showScreen('end');
+  const winner = (room.gamePlayers||[]).find(p => p.uid === room.winner);
+  document.getElementById('endWinnerName').textContent = winner ? winner.name.split(' ')[0] : '—';
+  const sorted = [...(room.gamePlayers||[])].sort((a,b) => b.score - a.score);
+  document.getElementById('endScores').innerHTML = sorted.map(p =>
+    `<div class="end-row ${p.uid===room.winner?'winner':''}">
+      <span>${p.uid===room.winner?'👑 ':''}${p.name.split(' ')[0]}</span>
+      <span>${p.score} pts</span>
+    </div>`
+  ).join('');
+}
+
+function goLobby() {
+  removeRoomListeners();
+  currentRoomId = null;
+  isHost = false;
+  localPlayerIndex = -1;
+  showScreen('lobby');
+}
+
+function showModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+window.closeModal = closeModal;
+
+function showInfo(title, msg) {
+  showModal(`<div class="modal-title">${title}</div><div class="modal-body">${msg||''}</div><div class="modal-btns"><button class="btn btn-gold" onclick="closeModal()">OK</button></div>`);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(initFirebase, 800);
+});
+</script>
+</body>
+</html>
