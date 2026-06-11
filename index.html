@@ -299,6 +299,7 @@ window.addEventListener('DOMContentLoaded', () => {
     firebase.initializeApp(FB);
     auth = firebase.auth();
     db   = firebase.database();
+    auth.getRedirectResult().catch(e => console.error('Redirect error:', e));
     auth.onAuthStateChanged(u => {
       if (u) { me = {uid:u.uid, name:u.displayName||'Explorador', photo:u.photoURL||''}; showLobby(); }
       else showScreen('slo');
