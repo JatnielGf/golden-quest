@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Golden Quest — Online</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Inter:wght@300;400;500;600&display=swap');
+:root{--bg:#0a0806;--s1:#141008;--s2:#1c1810;--s3:#252018;--gold:#c8903a;--gl:#e8b45a;--gd:#6a4a18;--tx:#f0e6d0;--td:#9a8a70;--tm:#554840;--coins:#f0c030;--crafts:#60b860;--jewels:#e0508a;--gems:#5090e0;--danger:#e05050;--ok:#50b870;--info:#5090d0;--border:rgba(200,144,58,.2);--bs:rgba(200,144,58,.5);--r:10px;--rl:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Inter',system-ui,sans-serif;min-height:100vh;font-size:14px}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+#sl{align-items:center;justify-content:center}
+.spin{width:32px;height:32px;border:2px solid var(--gd);border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite;margin:1rem auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.big-logo{font-family:'Cinzel',serif;font-size:2.5rem;font-weight:800;color:var(--gl);letter-spacing:.1em;text-align:center}
+
+/* LOGIN */
+#slo{align-items:center;justify-content:center;padding:2rem;background:radial-gradient(ellipse at 50% 20%,#1e1208,var(--bg) 65%)}
+.lcard{background:var(--s1);border:1px solid var(--bs);border-radius:var(--rl);padding:2.5rem 2rem;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.glogo{font-family:'Cinzel',serif;font-size:2.2rem;font-weight:800;color:var(--gl);letter-spacing:.08em;margin-bottom:.3rem}
+.gtag{font-size:.8rem;color:var(--td);letter-spacing:.2em;text-transform:uppercase;margin-bottom:2rem}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:.75rem;width:100%;padding:.85rem 1.5rem;background:white;color:#333;border:none;border-radius:var(--r);font-size:1rem;font-weight:500;cursor:pointer;transition:all .2s}
+.gbtn:hover{background:#f0f0f0;transform:translateY(-1px)}
+.gico{width:20px;height:20px}
+.lnote{font-size:.75rem;color:var(--tm);margin-top:1.5rem}
+.err{background:rgba(224,80,80,.1);border:1px solid rgba(224,80,80,.4);border-radius:var(--r);padding:.75rem;color:#e09090;font-size:.85rem;margin-top:.75rem;display:none}
+.err.show{display:block}
+
+/* LOBBY */
+#slb{background:radial-gradient(ellipse at 50% 0%,#1e1208,var(--bg) 50%)}
+.lhdr{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--s1);flex-wrap:wrap;gap:.5rem}
+.llogo{font-family:'Cinzel',serif;font-size:1.2rem;font-weight:700;color:var(--gl);letter-spacing:.08em}
+.upill{display:flex;align-items:center;gap:.5rem;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:.3rem .8rem;font-size:.8rem}
+.upill img{width:24px;height:24px;border-radius:50%;object-fit:cover}
+.uav{width:24px;height:24px;border-radius:50%;background:var(--gd);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-family:'Cinzel',serif;color:var(--gl)}
+.so-btn{background:none;border:1px solid var(--tm);color:var(--tm);padding:.25rem .6rem;border-radius:6px;cursor:pointer;font-size:.75rem}
+.so-btn:hover{border-color:var(--danger);color:var(--danger)}
+.lbody{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem 1rem}
+.lcon{width:100%;max-width:520px}
+.lgrt{font-family:'Cinzel',serif;font-size:1.1rem;color:var(--td);margin-bottom:2rem;text-align:center}
+.lsec{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);padding:1.5rem;margin-bottom:1rem}
+.stit{font-family:'Cinzel',serif;font-size:.75rem;color:var(--gold);letter-spacing:.2em;text-transform:uppercase;margin-bottom:1rem}
+.bmain{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--gd),var(--gold));border:none;border-radius:var(--r);color:#0a0806;font-family:'Cinzel',serif;font-size:1rem;font-weight:700;letter-spacing:.05em;cursor:pointer;transition:all .2s}
+.bmain:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.bsec{width:100%;padding:.75rem;background:var(--s2);border:1px solid var(--bs);border-radius:var(--r);color:var(--gl);font-size:.95rem;font-weight:500;cursor:pointer;transition:all .2s}
+.bsec:hover{background:var(--s3)}
+.jrow{display:flex;gap:.75rem}
+.jrow input{flex:1;background:var(--s2);border:1px solid var(--bs);border-radius:var(--r);color:var(--tx);padding:.75rem 1rem;font-size:1rem;font-family:'Cinzel',serif;letter-spacing:.2em;text-transform:uppercase}
+.jrow input::placeholder{color:var(--tm);letter-spacing:.1em;text-transform:none;font-family:'Inter',sans-serif}
+.jrow input:focus{outline:none;border-color:var(--gold)}
+.jrow .bsec{width:auto;white-space:nowrap}
+
+/* ROOM */
+#sr{background:radial-gradient(ellipse at 50% 0%,#1e1208,var(--bg) 50%)}
+.rhdr{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);background:var(--s1);flex-wrap:wrap;gap:.5rem}
+.rcode{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:700;color:var(--gl);letter-spacing:.25em;background:var(--s2);border:1px solid var(--bs);padding:.3rem .8rem;border-radius:var(--r);cursor:pointer}
+.rcode:hover{background:var(--s3)}
+.cpbadge{font-size:.7rem;color:var(--ok);opacity:0;transition:opacity .3s}
+.cpbadge.show{opacity:1}
+.rbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;gap:1.5rem}
+.wtit{font-family:'Cinzel',serif;font-size:1.3rem;color:var(--tx);text-align:center}
+.wsub{font-size:.9rem;color:var(--td);text-align:center}
+.pwrap{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+.pcard{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.5rem;display:flex;align-items:center;gap:.75rem;min-width:160px}
+.pcard.host{border-color:var(--gd)}
+.pav{width:36px;height:36px;border-radius:50%;background:var(--gd);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:.9rem;color:var(--gl);flex-shrink:0;overflow:hidden}
+.pav img{width:100%;height:100%;object-fit:cover}
+.pnm{font-weight:500;font-size:.9rem}
+.prl{font-size:.7rem;color:var(--gold)}
+.rcfg{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;width:100%;max-width:440px}
+.crow{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;gap:1rem;flex-wrap:wrap}
+.crow:last-child{margin-bottom:0}
+.clbl{font-size:.85rem;color:var(--td)}
+.cchips{display:flex;gap:.4rem;flex-wrap:wrap}
+.chip{padding:.3rem .7rem;border-radius:12px;border:1px solid var(--border);background:var(--s2);color:var(--td);cursor:pointer;font-size:.78rem;transition:all .15s}
+.chip.on{background:var(--gd);border-color:var(--gold);color:var(--gl)}
+.chip:hover{border-color:var(--gd)}
+.chip:disabled{opacity:.4;cursor:default}
+.ctog{display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:var(--td)}
+.ctog input[type=checkbox]{accent-color:var(--gold);width:14px;height:14px}
+.cnote{font-size:.75rem;color:var(--tm);font-style:italic}
+
+/* GAME */
+#sg{background:var(--bg)}
+.gtop{display:flex;align-items:center;gap:.75rem;padding:.6rem 1rem;background:var(--s1);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tlogo{font-family:'Cinzel',serif;font-size:.9rem;font-weight:700;color:var(--gold);letter-spacing:.1em}
+.spills{display:flex;gap:.4rem;flex-wrap:wrap;flex:1}
+.spill{display:flex;align-items:center;gap:.3rem;background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:.2rem .6rem;font-size:.78rem;color:var(--td);white-space:nowrap}
+.spill.me{border-color:var(--gold);color:var(--gl);background:rgba(200,144,58,.1)}
+.spill.cur{border-color:var(--info);color:#90c0f0;background:rgba(80,144,208,.1)}
+.spill-pts{font-family:'Cinzel',serif;font-weight:600}
+.gbody{flex:1;display:flex;flex-direction:column;gap:.65rem;padding:.75rem;overflow-y:auto}
+.tban{padding:.5rem 1rem;border-radius:var(--r);text-align:center;font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.05em}
+.tban.mine{background:rgba(200,144,58,.12);border:1px solid var(--gd);color:var(--gl)}
+.tban.wait{background:var(--s1);border:1px solid var(--border);color:var(--td)}
+.tban.frz{background:rgba(224,80,80,.12);border:1px solid rgba(224,80,80,.4);color:#e09090}
+.pbar{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.5rem}
+.ptag{padding:.2rem .55rem;border-radius:10px;font-size:.68rem;font-family:'Cinzel',serif;letter-spacing:.04em;border:1px solid var(--tm);color:var(--tm)}
+.ptag.done{border-color:var(--ok);color:var(--ok);opacity:.7}
+.ptag.cur{background:rgba(200,144,58,.15);border-color:var(--gold);color:var(--gl)}
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:.85rem}
+.panel.ap{border-color:var(--gd)}
+.plbl{font-size:.68rem;font-family:'Cinzel',serif;letter-spacing:.15em;color:var(--gd);text-transform:uppercase;margin-bottom:.5rem}
+.crow2{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end}
+.card{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:58px;height:82px;border-radius:7px;border:1.5px solid;position:relative;flex-shrink:0;transition:transform .12s,box-shadow .12s;user-select:none}
+.card.ck{cursor:pointer}
+.card.ck:hover{transform:translateY(-5px);box-shadow:0 6px 16px rgba(0,0,0,.4)}
+.card.sel{transform:translateY(-8px)!important;box-shadow:0 8px 20px rgba(200,144,58,.4)!important;border-color:var(--gold)!important}
+.card.fd{background:var(--s2);border-color:var(--gd);cursor:default}
+.card.emp{background:var(--s2);border-color:var(--tm);border-style:dashed;opacity:.4;cursor:default}
+.cnum{font-family:'Cinzel',serif;font-size:.88rem;font-weight:700;line-height:1}
+.cico{font-size:1.1rem;line-height:1;margin-top:1px}
+.cgem{font-size:.5rem;line-height:1.3;text-align:center;margin-top:1px}
+.clb{font-size:.56rem;color:var(--td);text-align:center;margin-top:1px;font-family:'Cinzel',serif}
+.sc{background:#120e00;border-color:#806020}.sc .cico{color:var(--coins)}.sc .cnum{color:var(--coins)}
+.scr{background:#081208;border-color:#285828}.scr .cico{color:var(--crafts)}.scr .cnum{color:var(--crafts)}
+.sj{background:#120808;border-color:#882850}.sj .cico{color:var(--jewels)}.sj .cnum{color:var(--jewels)}
+.sg2{background:#080c18;border-color:#284888}.sg2 .cico{color:var(--gems)}.sg2 .cnum{color:var(--gems)}
+.st{background:#080818;border-color:#383880}.st .cico{color:#9090d8}.st .cnum{color:#9090d8}
+.sgold{background:#120e00;border-color:var(--gold)}.sgold .cico{color:var(--gl)}.sgold .cnum{color:var(--gl)}
+.sjk{background:#100818;border-color:#584888}.sjk .cico{color:#c090f0}
+.mini-btn{position:absolute;bottom:2px;font-size:.55rem;padding:1px 3px;border-radius:3px;border:1px solid;cursor:pointer;line-height:1.2}
+.mb-d{left:2px;border-color:var(--danger);color:var(--danger);background:rgba(224,80,80,.1)}
+.mb-s{right:2px;border-color:var(--ok);color:var(--ok);background:rgba(80,184,112,.1)}
+.acts{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+.btn{padding:.45rem .9rem;border-radius:7px;font-size:.8rem;font-family:'Cinzel',serif;letter-spacing:.04em;cursor:pointer;border:1px solid;transition:all .12s;white-space:nowrap}
+.btn:disabled{opacity:.3;cursor:default}
+.bg{background:rgba(200,144,58,.15);border-color:var(--gold);color:var(--gl)}.bg:hover:not(:disabled){background:rgba(200,144,58,.25)}
+.bb{background:rgba(80,144,208,.12);border-color:var(--info);color:#90c0f0}.bb:hover:not(:disabled){background:rgba(80,144,208,.22)}
+.br{background:rgba(224,80,80,.12);border-color:var(--danger);color:#e09090}.br:hover:not(:disabled){background:rgba(224,80,80,.22)}
+.bk{background:rgba(80,184,112,.12);border-color:var(--ok);color:#80d898}.bk:hover:not(:disabled){background:rgba(80,184,112,.22)}
+.bd{background:var(--s2);border-color:var(--tm);color:var(--td)}.bd:hover:not(:disabled){background:var(--s3)}
+.g2col{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.g3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem}
+.ocard{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:.65rem}
+.ocard.ao{border-color:var(--info)}
+.ohdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem}
+.onm{font-size:.82rem;font-weight:500}
+.opts{font-family:'Cinzel',serif;font-size:.78rem;color:var(--gold)}
+.mc{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:40px;height:56px;border-radius:5px;border:1px solid;flex-shrink:0}
+.mc.fd2{background:var(--s2);border-color:var(--gd);color:var(--gd);font-size:.9rem}
+.lbox{max-height:100px;overflow-y:auto;padding:.5rem;background:var(--s2);border-radius:7px}
+.le{font-size:.77rem;color:var(--td);padding:.15rem 0 .15rem .5rem;border-left:2px solid transparent;line-height:1.4}
+.le.es{border-color:var(--gold);color:var(--gl)}
+.le.ea{border-color:var(--danger);color:#e09090}
+.le.ei{border-color:var(--info)}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem}
+.mo.open{display:flex}
+.mb{background:var(--s1);border:1px solid var(--bs);border-radius:var(--rl);padding:1.5rem;max-width:460px;width:100%;max-height:85vh;overflow-y:auto}
+.mt{font-family:'Cinzel',serif;font-size:1rem;color:var(--gl);margin-bottom:.75rem}
+.mx{font-size:.9rem;color:var(--td);margin-bottom:1rem;line-height:1.5}
+.mcs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.mbs{display:flex;gap:.5rem;flex-wrap:wrap}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(60px);background:var(--s3);border:1px solid var(--bs);border-radius:20px;padding:.6rem 1.2rem;font-size:.85rem;color:var(--tx);z-index:300;transition:transform .3s ease;white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+#send{align-items:center;justify-content:center;padding:2rem;background:radial-gradient(ellipse at 50% 30%,#2a1a06,var(--bg) 70%)}
+.ecard{background:var(--s1);border:1px solid var(--gold);border-radius:var(--rl);padding:2rem;max-width:400px;width:100%;text-align:center;box-shadow:0 0 60px rgba(200,144,58,.15)}
+.etro{font-size:3.5rem;margin-bottom:.5rem}
+.ewn{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--gl);margin-bottom:.3rem}
+.esub{color:var(--td);margin-bottom:1.5rem;font-size:.9rem}
+.erow{display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--s2);font-size:.9rem}
+.erow.w{color:var(--gl);font-weight:500}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--gd);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="sl" class="screen active"><div class="big-logo">⚜ GOLDEN QUEST</div><div class="spin"></div></div>
+
+<div id="slo" class="screen">
+  <div class="lcard">
+    <div class="glogo">⚜ GOLDEN QUEST</div>
+    <div class="gtag">La búsqueda del mejor caza tesoros</div>
+    <button class="gbtn" onclick="signInGoogle()">
+      <svg class="gico" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continuar con Google
+    </button>
+    <div id="lerr" class="err">Error al iniciar sesión. Intentá de nuevo.</div>
+    <div class="lnote">Tu nombre y foto serán visibles en la sala de juego.</div>
+  </div>
+</div>
+
+<div id="slb" class="screen">
+  <div class="lhdr">
+    <div class="llogo">⚜ GOLDEN QUEST</div>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <div class="upill"><div class="uav" id="lavSmall">?</div><span id="lname">—</span></div>
+      <button class="so-btn" onclick="doSignOut()">Salir</button>
+    </div>
+  </div>
+  <div class="lbody"><div class="lcon">
+    <div class="lgrt" id="lgrt">Bienvenido, explorador</div>
+    <div class="lsec"><div class="stit">Nueva sala</div><button class="bmain" onclick="createRoom()">⛏ Crear sala</button></div>
+    <div class="lsec">
+      <div class="stit">Unirse a sala</div>
+      <div class="jrow">
+        <input type="text" id="jcode" placeholder="Código de sala (ej: ABCD12)" maxlength="6">
+        <button class="bsec" onclick="joinRoom()">Unirse →</button>
+      </div>
+      <div id="jerr" class="err">Sala no encontrada o partida ya comenzó.</div>
+    </div>
+  </div></div>
+</div>
+
+<div id="sr" class="screen">
+  <div class="rhdr">
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <span style="font-size:.75rem;color:var(--td)">Código de sala</span>
+      <span class="rcode" id="dcode" onclick="copyCode()">——————</span>
+      <span class="cpbadge" id="cpb">¡Copiado!</span>
+    </div>
+    <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+      <span id="rstat" style="font-size:.8rem;color:var(--td)">Esperando...</span>
+      <button class="bsec" style="width:auto;padding:.4rem .8rem;font-size:.8rem" onclick="leaveRoom()">Abandonar</button>
+    </div>
+  </div>
+  <div class="rbody">
+    <div><div class="wtit">Sala de espera</div><div class="wsub">Compartí el código con tus amigos</div></div>
+    <div class="pwrap" id="pwrap"></div>
+    <div class="rcfg" id="rcfg">
+      <div class="plbl" style="margin-bottom:.75rem">Configuración</div>
+      <div class="crow"><span class="clbl">Tamaño del Saco</span>
+        <div class="cchips" id="cSack">
+          <button class="chip" data-v="4" onclick="setCfg('sackSize',4,this)">4</button>
+          <button class="chip on" data-v="6" onclick="setCfg('sackSize',6,this)">6</button>
+          <button class="chip" data-v="8" onclick="setCfg('sackSize',8,this)">8</button>
+        </div>
+      </div>
+      <div class="crow"><span class="clbl">Modalidad</span>
+        <div class="cchips" id="cMode">
+          <button class="chip on" data-v="seq" onclick="setCfg('mode','seq',this)">Secuencia</button>
+          <button class="chip" data-v="set" onclick="setCfg('mode','set',this)">Conjunto</button>
+          <button class="chip" data-v="free" onclick="setCfg('mode','free',this)">Libre</button>
+        </div>
+      </div>
+      <div class="crow">
+        <label class="ctog"><input type="checkbox" id="cFool" onchange="setCfgBool('foolsGold',this)" checked> Fool's Gold</label>
+        <label class="ctog"><input type="checkbox" id="cBag" onchange="setCfgBool('goldenBag',this)" checked> Golden Bag</label>
+        <label class="ctog"><input type="checkbox" id="cSeek" onchange="setCfgBool('goldSeek',this)"> Gold-Seek</label>
+      </div>
+      <div class="cnote" id="cnote">Solo el host puede cambiar la configuración</div>
+    </div>
+    <div style="width:100%;max-width:440px" id="sbarea"></div>
+    <div id="wmsg" style="font-size:.85rem;color:var(--td);text-align:center"></div>
+  </div>
+</div>
+
+<div id="sg" class="screen">
+  <div class="gtop">
+    <div class="tlogo">⚜ GQ</div>
+    <div class="spills" id="spills"></div>
+    <span style="font-size:.72rem;color:var(--tm)">Meta: 40 pts</span>
+  </div>
+  <div class="gbody" id="gbody"></div>
+</div>
+
+<div id="send" class="screen">
+  <div class="ecard">
+    <div class="etro">👑</div>
+    <div class="ewn" id="ewnm">—</div>
+    <div class="esub">¡Mejor Caza Tesoros!</div>
+    <div id="escores" style="margin-bottom:1.5rem"></div>
+    <button class="bmain" onclick="goLobby()">Volver al lobby</button>
+  </div>
+</div>
+
+<div class="mo" id="mo"><div class="mb" id="mc"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════
+//  FIREBASE CONFIG — reemplazá con tus datos
+// ════════════════════════════════════════════
+const FB = {
+  apiKey: "FIREBASE_CONFIG_HERE",
+  authDomain: "FIREBASE_CONFIG_HERE",
+  databaseURL: "FIREBASE_CONFIG_HERE",
+  projectId: "FIREBASE_CONFIG_HERE",
+  storageBucket: "FIREBASE_CONFIG_HERE",
+  messagingSenderId: "FIREBASE_CONFIG_HERE",
+  appId: "FIREBASE_CONFIG_HERE"
+};
+
+// ════════════════════════════════════════════
+//  GLOBALS
+// ════════════════════════════════════════════
+let auth, db, me = null, roomId = null, amHost = false, myIdx = -1, G = null, listeners = [];
+
+// ════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    firebase.initializeApp(FB);
+    auth = firebase.auth();
+    db   = firebase.database();
+    auth.onAuthStateChanged(u => {
+      if (u) { me = {uid:u.uid, name:u.displayName||'Explorador', photo:u.photoURL||''}; showLobby(); }
+      else showScreen('slo');
+    });
+  } catch(e) { console.error(e); showScreen('slo'); }
+});
+
+// ════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function showModal(html) { document.getElementById('mc').innerHTML=html; document.getElementById('mo').classList.add('open'); }
+function closeModal() { document.getElementById('mo').classList.remove('open'); }
+window.closeModal = closeModal;
+function showInfo(t,m) { showModal(`<div class="mt">${t}</div><div class="mx">${m||''}</div><div class="mbs"><button class="btn bg" onclick="closeModal()">OK</button></div>`); }
+
+// ════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════
+async function signInGoogle() {
+  try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+  catch(e) { document.getElementById('lerr').classList.add('show'); }
+}
+async function doSignOut() { if(roomId) await leaveRoom(); await auth.signOut(); showScreen('slo'); }
+
+// ════════════════════════════════════════════
+//  LOBBY
+// ════════════════════════════════════════════
+function showLobby() {
+  clearListeners();
+  roomId=null; amHost=false; myIdx=-1; G=null;
+  showScreen('slb');
+  document.getElementById('lgrt').textContent = `Bienvenido, ${me.name.split(' ')[0]}`;
+  document.getElementById('lname').textContent = me.name.split(' ')[0];
+  const av = document.getElementById('lavSmall');
+  av.innerHTML = me.photo ? `<img src="${me.photo}" style="width:24px;height:24px;border-radius:50%;object-fit:cover">` : me.name[0].toUpperCase();
+}
+
+function genCode() {
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s=''; for(let i=0;i<6;i++) s+=c[Math.floor(Math.random()*c.length)]; return s;
+}
+
+async function createRoom() {
+  const code = genCode();
+  const data = {
+    code, host: me.uid, status:'waiting', created: Date.now(),
+    config: {sackSize:6, mode:'seq', foolsGold:true, goldenBag:true, goldSeek:false},
+    players: { [me.uid]: {uid:me.uid, name:me.name, photo:me.photo||'', score:0, joinedAt:Date.now()} }
+  };
+  await db.ref(`rooms/${code}`).set(data);
+  roomId = code; amHost = true;
+  enterRoom();
+}
+
+async function joinRoom() {
+  const code = document.getElementById('jcode').value.trim().toUpperCase();
+  if (!code) return;
+  const snap = await db.ref(`rooms/${code}`).get();
+  if (!snap.exists()) { showErr('jerr','Sala no encontrada.'); return; }
+  const r = snap.val();
+  if (r.status !== 'waiting') { showErr('jerr','La partida ya comenzó.'); return; }
+  const pc = r.players ? Object.keys(r.players).length : 0;
+  if (pc >= 4) { showErr('jerr','Sala llena (máx. 4).'); return; }
+  await db.ref(`rooms/${code}/players/${me.uid}`).set({uid:me.uid, name:me.name, photo:me.photo||'', score:0, joinedAt:Date.now()});
+  roomId = code; amHost = false;
+  enterRoom();
+}
+
+function showErr(id, msg) { const e=document.getElementById(id); e.textContent=msg; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),4000); }
+
+// ════════════════════════════════════════════
+//  ROOM
+// ════════════════════════════════════════════
+function enterRoom() {
+  document.getElementById('dcode').textContent = roomId;
+  showScreen('sr');
+  const ref = db.ref(`rooms/${roomId}`);
+  const cb = ref.on('value', snap => {
+    if (!snap.exists()) { showLobby(); return; }
+    const r = snap.val();
+    if (r.status === 'playing') { clearListeners(); G=r; myIdx=G.players2.findIndex(p=>p.uid===me.uid); showScreen('sg'); listenGame(); return; }
+    if (r.status === 'ended') { clearListeners(); showEnd(r); return; }
+    renderRoom(r);
+  });
+  listeners.push({ref,cb,type:'value'});
+}
+
+function renderRoom(r) {
+  const players = r.players ? Object.values(r.players).sort((a,b)=>a.joinedAt-b.joinedAt) : [];
+  amHost = r.host === me.uid;
+  document.getElementById('rstat').textContent = `${players.length}/4 jugadores`;
+  document.getElementById('pwrap').innerHTML = players.map(p=>`
+    <div class="pcard ${p.uid===r.host?'host':''}">
+      <div class="pav">${p.photo?`<img src="${p.photo}">`:(p.name||'?')[0]}</div>
+      <div><div class="pnm">${(p.name||'?').split(' ')[0]}</div><div class="prl">${p.uid===r.host?'⚜ Host':'⚔ Jugador'}</div></div>
+    </div>`).join('');
+  const cfg = r.config||{};
+  document.getElementById('cnote').style.display = amHost?'none':'block';
+  ['cSack','cMode'].forEach(id=>{
+    document.querySelectorAll(`#${id} .chip`).forEach(c=>{
+      c.disabled=!amHost;
+      const f=id==='cSack'?'sackSize':'mode';
+      c.classList.toggle('on', String(cfg[f])===String(c.dataset.v));
+    });
+  });
+  ['cFool','cBag','cSeek'].forEach(id=>{ document.getElementById(id).disabled=!amHost; });
+  document.getElementById('cFool').checked=!!cfg.foolsGold;
+  document.getElementById('cBag').checked=!!cfg.goldenBag;
+  document.getElementById('cSeek').checked=!!cfg.goldSeek;
+  const sa=document.getElementById('sbarea'), wm=document.getElementById('wmsg');
+  if(amHost){
+    sa.innerHTML=players.length>=2
+      ?`<button class="bmain" onclick="hostStart()">⚔ Iniciar partida (${players.length} jugadores)</button>`
+      :`<button class="bmain" style="opacity:.4;cursor:default" disabled>Esperando jugadores (mín. 2)...</button>`;
+    wm.textContent='';
+  } else { sa.innerHTML=''; wm.textContent='Esperando que el host inicie...'; }
+}
+
+function setCfg(field, val, btn) {
+  if(!amHost) return;
+  db.ref(`rooms/${roomId}/config/${field}`).set(val);
+  const g=btn.parentElement; g.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); btn.classList.add('on');
+}
+function setCfgBool(field, el) {
+  if(!amHost){ el.checked=!el.checked; return; }
+  db.ref(`rooms/${roomId}/config/${field}`).set(el.checked);
+}
+function copyCode() { navigator.clipboard.writeText(roomId||'').catch(()=>{}); const b=document.getElementById('cpb'); b.classList.add('show'); setTimeout(()=>b.classList.remove('show'),2000); }
+async function leaveRoom() {
+  clearListeners();
+  if(!roomId) return;
+  try { amHost ? await db.ref(`rooms/${roomId}`).remove() : await db.ref(`rooms/${roomId}/players/${me.uid}`).remove(); } catch(e){}
+  showLobby();
+}
+
+// ════════════════════════════════════════════
+//  HOST START GAME
+// ════════════════════════════════════════════
+async function hostStart() {
+  if(!amHost) return;
+  const snap = await db.ref(`rooms/${roomId}`).get();
+  const r = snap.val();
+  const cfg = r.config||{};
+  const players = Object.values(r.players||{}).sort((a,b)=>a.joinedAt-b.joinedAt);
+  const deck = shuffle(buildDeck());
+  const gs = {
+    status:'playing',
+    config: cfg,
+    deck,
+    discard:[],
+    curIdx:0,
+    phase:'saque',
+    takenCard:null,
+    roundWinners:[],
+    frenzy:false,
+    frenzyIdxs:[],
+    roundNum:1,
+    log:[],
+    winner:null,
+    // store players separately so indices are stable
+    players2: players.map((p,i)=>({uid:p.uid,name:p.name,photo:p.photo||'',sack:[],score:0,goldenBags:0,shieldInSack:false,heartProt:false,pendingCombo:null,idx:i}))
+  };
+  await db.ref(`rooms/${roomId}`).update(gs);
+}
+
+// ════════════════════════════════════════════
+//  GAME LISTENER
+// ════════════════════════════════════════════
+function listenGame() {
+  const ref = db.ref(`rooms/${roomId}`);
+  const cb = ref.on('value', snap=>{
+    if(!snap.exists()){showLobby();return;}
+    G=snap.val();
+    if(G.status==='ended'){clearListeners();showEnd(G);return;}
+    myIdx=G.players2.findIndex(p=>p.uid===me.uid);
+    renderGame();
+  });
+  listeners.push({ref,cb,type:'value'});
+}
+
+function clearListeners(){ listeners.forEach(({ref,cb,type})=>ref.off(type,cb)); listeners=[]; }
+
+// ════════════════════════════════════════════
+//  CARD HELPERS
+// ════════════════════════════════════════════
+const SUITS={coins:{n:'Monedas',i:'🪙',c:'sc'},crafts:{n:'Artesanías',i:'⚒️',c:'scr'},jewels:{n:'Joyas',i:'💎',c:'sj'},gems:{n:'Piedras Preciosas',i:'🔮',c:'sg2'}};
+const SK=['coins','crafts','jewels','gems'];
+
+function buildDeck(){
+  let id=0,cards=[];
+  SK.forEach(s=>{
+    for(let n=2;n<=10;n++) cards.push({id:id++,type:'treasure',suit:s,num:n});
+    ['J','Q','K'].forEach(t=>cards.push({id:id++,type:'tool',suit:s,tool:t}));
+    cards.push({id:id++,type:'golden',suit:s,num:1});
+  });
+  cards.push({id:id++,type:'joker',sub:'toolbox'});
+  cards.push({id:id++,type:'joker',sub:'toolbox'});
+  cards.push({id:id++,type:'joker',sub:'shield'});
+  return cards;
+}
+
+function shuffle(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+
+function scls(c){
+  if(!c) return '';
+  if(c.type==='joker') return 'sjk';
+  if(c.type==='tool') return 'st';
+  if(c.type==='golden') return 'sgold';
+  return SUITS[c.suit]?.c||'';
+}
+
+function chtml(c,{ck=false,sel=false,sm=false}={}){
+  const w=sm?'40px':'58px', h=sm?'56px':'82px';
+  if(!c) return `<div class="card emp" style="width:${w};height:${h}"><span style="color:var(--tm);font-size:1rem">+</span></div>`;
+  let inner='';
+  if(c.type==='joker'){
+    inner=`<span class="cico">${c.sub==='shield'?'🛡️':'🧰'}</span><span class="clb">${c.sub==='shield'?'Escudo':'Caja'}</span>`;
+  } else if(c.type==='tool'){
+    const ic={J:'⚔️',Q:'🔭',K:'🔄'};
+    inner=`<span class="cnum" style="font-size:${sm?'.7rem':'.88rem'}">${c.tool}</span><span class="cico" style="font-size:${sm?'.85rem':'1.1rem'}">${ic[c.tool]}</span>`;
+  } else if(c.type==='golden'){
+    inner=`<span class="cnum" style="font-size:${sm?'.7rem':'.88rem'}">A</span><span class="cico" style="font-size:${sm?'.85rem':'1.1rem'}">${SUITS[c.suit].i}</span><span class="clb">ATIO</span>`;
+  } else {
+    const ico=SUITS[c.suit].i;
+    inner=`<span class="cnum" style="font-size:${sm?'.7rem':'.88rem'}">${c.num}</span><span class="cico" style="font-size:${sm?'.85rem':'1.1rem'}">${ico}</span><span class="cgem" style="font-size:${sm?'.42rem':'.5rem'}">${ico.repeat(Math.min(c.num,6))}</span>`;
+  }
+  return `<div class="card ${scls(c)} ${ck?'ck':''} ${sel?'sel':''}" style="width:${w};height:${h}">${inner}</div>`;
+}
+
+function cname(c){
+  if(!c) return '?';
+  if(c.type==='joker') return c.sub==='shield'?'Escudo':'Caja de Herramientas';
+  if(c.type==='golden') return `As de ${SUITS[c.suit].n}`;
+  if(c.type==='tool') return ({J:'Daga',Q:'Binoculares',K:'Trueque'})[c.tool]+` de ${SUITS[c.suit].n}`;
+  return `${c.num} de ${SUITS[c.suit].n}`;
+}
+
+// ════════════════════════════════════════════
+//  VALIDATION
+// ════════════════════════════════════════════
+function sackOk(p){
+  if(!p.sack||p.sack.length<G.config.sackSize) return false;
+  if(!G.config.foolsGold){
+    if(p.sack.some(c=>c&&c.type!=='treasure'&&c.type!=='golden')) return false;
+    return fmOk(p.sack,G.config.mode);
+  }
+  return true;
+}
+
+function fmOk(cards,mode){
+  const t=(cards||[]).filter(c=>c&&(c.type==='treasure'||c.type==='golden'));
+  if(t.length<2) return false;
+  if(mode==='seq') return isSeq(t);
+  if(mode==='set') return isSet(t);
+  return isSeq(t)||isSet(t)||isMix(t);
+}
+
+function isSeq(cards){
+  const nums=cards.filter(c=>c.type==='treasure').map(c=>c.num).sort((a,b)=>a-b);
+  let aces=cards.filter(c=>c.type==='golden').length;
+  for(let i=1;i<nums.length;i++){const g=nums[i]-nums[i-1]-1;if(g<0)return false;aces-=g;if(aces<0)return false;}
+  return true;
+}
+
+function isSet(cards){
+  const nums=cards.filter(c=>c.type==='treasure').map(c=>c.num);
+  return[...new Set(nums)].length<=1;
+}
+
+function isMix(cards){
+  if(cards.length<4)return false;
+  for(let s=2;s<=cards.length-2;s++){
+    const combos=comb(cards,s);
+    for(const g1 of combos){const g2=cards.filter(c=>!g1.includes(c));if((isSeq(g1)||isSet(g1))&&(isSeq(g2)||isSet(g2)))return true;}
+  }
+  return false;
+}
+
+function comb(arr,k){if(k===0)return[[]];if(!arr.length)return[];const[h,...t]=arr;return[...comb(t,k-1).map(c=>[h,...c]),...comb(t,k)];}
+
+function calcSc(p){
+  const t=(p.sack||[]).filter(c=>c&&c.type==='treasure');
+  const a=(p.sack||[]).filter(c=>c&&c.type==='golden');
+  const all=[...t,...a]; let s=all.length;
+  const len=Math.min(all.length,4);
+  if(len>=3&&(isSeq(all)||isSet(all))) s=len*2;
+  return s;
+}
+
+// ════════════════════════════════════════════
+//  DRAW
+// ════════════════════════════════════════════
+function drawOne(state){
+  let deck=[...(state.deck||[])], discard=[...(state.discard||[])];
+  if(deck.length===0){
+    if(discard.length===0) return {card:null,deck,discard};
+    deck=shuffle([...discard]); discard=[];
+    state.log=slog(state,'Mina agotada — Cubeta barajada.','ei');
+  }
+  return {card:deck.pop(),deck,discard};
+}
+
+function slog(state,msg,ev=''){
+  const logs=[...(state.log||[])];
+  logs.unshift({msg,ev,ts:Date.now()});
+  if(logs.length>40)logs.length=40;
+  return logs;
+}
+
+function updShield(p){p.shieldInSack=(p.sack||[]).some(c=>c&&c.type==='joker'&&c.sub==='shield');}
+
+// ════════════════════════════════════════════
+//  RENDER GAME
+// ════════════════════════════════════════════
+function renderGame(){
+  if(!G||myIdx<0)return;
+  // Score pills
+  document.getElementById('spills').innerHTML=(G.players2||[]).map((p,i)=>{
+    const isMe=p.uid===me.uid, isCur=i===G.curIdx;
+    return `<div class="spill ${isMe?'me':isCur?'cur':''}">${isMe?'⚜ ':''}${p.name.split(' ')[0]} <span class="spill-pts">${p.score}</span>${p.shieldInSack?' 🛡️':''}</div>`;
+  }).join('');
+
+  const isMt=G.curIdx===myIdx;
+  const ap=G.players2[G.curIdx];
+  const mp=G.players2[myIdx];
+  let html='';
+
+  // Turn banner
+  if(G.frenzy){
+    html+=`<div class="tban frz">⚡ FRENESÍ — ${isMt?'¡Tu turno!':'Turno de '+ap.name.split(' ')[0]}</div>`;
+  } else if(isMt){
+    html+=`<div class="tban mine">⚜ Tu turno${ap.pendingCombo?' — Combo '+SUITS[ap.pendingCombo]?.n:''}${ap.heartProt?' — ❤️ Protegido':''}</div>`;
+  } else {
+    html+=`<div class="tban wait">Turno de ${ap.name.split(' ')[0]}${ap.pendingCombo?' (combo '+SUITS[ap.pendingCombo]?.n+')':''}</div>`;
+  }
+
+  // Phase bar (my turn only)
+  if(isMt){
+    const phases=G.frenzy?['take','discard','fin']:['saque','combo','take','tool','discard','fin'];
+    const labels={saque:'Saque',combo:'Combo',take:'Tomar',tool:'Herramienta',discard:'Botar',fin:'Fin'};
+    const cur=G.phase==='done'?'fin':G.phase;
+    const ci=phases.indexOf(cur);
+    html+=`<div class="pbar">${phases.map((ph,i)=>`<span class="ptag ${i<ci?'done':i===ci?'cur':''}">${labels[ph]}</span>`).join('')}</div>`;
+  }
+
+  // My sack
+  const sack=mp.sack||[], sz=G.config.sackSize;
+  let slots='';
+  for(let i=0;i<sz;i++){
+    const c=sack[i];
+    if(!c){ slots+=`<div class="card emp" style="width:58px;height:82px"><span style="color:var(--tm);font-size:1rem">+</span></div>`; continue; }
+    const canAct=isMt&&(G.phase==='discard'||G.phase==='tool'||G.phase==='done');
+    const canSwap=isMt&&(G.phase==='discard'||G.phase==='tool')&&G.takenCard;
+    const faceup=i===0?`<div style="position:absolute;top:2px;right:3px;font-size:8px;color:var(--td)">👁</div>`:'';
+    const dBtn=canAct?`<button class="mini-btn mb-d" onclick="actDsc(${i})">✕</button>`:'';
+    const sBtn=canSwap?`<button class="mini-btn mb-s" onclick="actSwap(${i})">⇄</button>`:'';
+    let inner='';
+    if(c.type==='joker') inner=`<span class="cico">${c.sub==='shield'?'🛡️':'🧰'}</span><span class="clb">${c.sub==='shield'?'Escudo':'Caja'}</span>`;
+    else if(c.type==='tool') inner=`<span class="cnum">${c.tool}</span><span class="cico">${{J:'⚔️',Q:'🔭',K:'🔄'}[c.tool]}</span>`;
+    else if(c.type==='golden') inner=`<span class="cnum">A</span><span class="cico">${SUITS[c.suit].i}</span><span class="clb">ATIO</span>`;
+    else inner=`<span class="cnum">${c.num}</span><span class="cico">${SUITS[c.suit].i}</span><span class="cgem">${SUITS[c.suit].i.repeat(Math.min(c.num,6))}</span>`;
+    slots+=`<div class="card ${scls(c)}" style="position:relative;width:58px;height:82px">${faceup}${inner}${dBtn}${sBtn}</div>`;
+  }
+
+  html+=`<div class="panel ${isMt?'ap':''}">
+    <div class="plbl">Mi Saco (${sack.length}/${sz})</div>
+    <div class="crow2">${slots}</div>`;
+
+  // Taken card
+  if(isMt&&G.takenCard){
+    const c=G.takenCard, full=sack.length>=sz;
+    html+=`<div style="margin-top:.65rem"><div class="plbl">Carta tomada</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        ${chtml(c)}
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <button class="btn bk" ${full?'disabled':''} onclick="actKeep()">✚ Guardar</button>
+          <button class="btn br" onclick="actDscTaken()">✕ Botar</button>
+        </div>
+      </div></div>`;
+  }
+
+  // Action buttons
+  if(isMt){
+    const p=G.players2[myIdx];
+    const hasJ=(p.sack||[]).some(c=>c&&c.type==='tool'&&c.tool==='J')||(G.takenCard&&G.takenCard.type==='tool'&&G.takenCard.tool==='J');
+    const hasQ=(p.sack||[]).some(c=>c&&c.type==='tool'&&c.tool==='Q')||(G.takenCard&&G.takenCard.type==='tool'&&G.takenCard.tool==='Q');
+    const hasK=(p.sack||[]).some(c=>c&&c.type==='tool'&&c.tool==='K')||(G.takenCard&&G.takenCard.type==='tool'&&G.takenCard.tool==='K');
+    const hasTB=(p.sack||[]).some(c=>c&&c.type==='joker'&&c.sub==='toolbox')||(G.takenCard&&G.takenCard.type==='joker'&&G.takenCard.sub==='toolbox');
+    let btns='<div class="acts">';
+    if(G.phase==='saque'&&!G.frenzy){
+      btns+=`<button class="btn ${sackOk(p)?'bg':''}" onclick="actSaque()" ${sackOk(p)?'':'disabled'}>🏆 Saque</button>`;
+      btns+=`<button class="btn bb" onclick="actCombo()">✦ Combo</button>`;
+      btns+=`<button class="btn bd" onclick="actTake()">⛏ Tomar →</button>`;
+    }
+    if(G.phase==='take'&&!G.frenzy) btns+=`<button class="btn bg" onclick="actTake()">⛏ Tomar de Mina</button>`;
+    if(G.phase==='take'&&G.frenzy) btns+=`<button class="btn bg" onclick="actFrz()">⛏ Tomar 2 cartas</button>`;
+    if(G.phase==='tool'||G.phase==='discard'){
+      if(hasJ) btns+=`<button class="btn br" onclick="actJ()">⚔ Daga</button>`;
+      if(hasQ) btns+=`<button class="btn bb" onclick="actQ()">🔭 Binoculares</button>`;
+      if(hasK) btns+=`<button class="btn bb" onclick="actK()">🔄 Trueque</button>`;
+      if(hasTB) btns+=`<button class="btn bb" onclick="actTB()">🧰 Caja</button>`;
+    }
+    if(G.phase==='tool'||G.phase==='discard'||G.phase==='done') btns+=`<button class="btn bd" onclick="actEnd()">→ Fin turno</button>`;
+    btns+='</div>';
+    html+=btns;
+  }
+  html+='</div>';
+
+  // Mine + Discard
+  const td=G.discard&&G.discard.length>0?G.discard[G.discard.length-1]:null;
+  html+=`<div class="g2col">
+    <div class="panel"><div class="plbl">⛏ La Mina</div><div class="card fd" style="width:58px;height:82px"><span style="font-size:1.2rem;color:var(--gd)">⚜</span></div><div style="font-size:.75rem;color:var(--tm);margin-top:4px">${(G.deck||[]).length} cartas</div></div>
+    <div class="panel"><div class="plbl">🗑 La Cubeta</div>${td?chtml(td):'<span style="font-size:.8rem;color:var(--tm)">Vacía</span>'}<div style="font-size:.75rem;color:var(--tm);margin-top:4px">${(G.discard||[]).length} cartas</div></div>
+  </div>`;
+
+  // Opponents
+  const opps=(G.players2||[]).filter(p=>p.uid!==me.uid);
+  if(opps.length){
+    const rw=G.roundWinners||[];
+    html+=`<div class="${opps.length===1?'g2col':opps.length===2?'g2col':'g3col'}">`;
+    opps.forEach(op=>{
+      const opi=G.players2.findIndex(p=>p.uid===op.uid);
+      const isCur=opi===G.curIdx, isDone=rw.includes(opi);
+      const sack=op.sack||[];
+      let cards=sack.map((c,i)=>{
+        if(!c)return'';
+        if(i===0){
+          let inn='';
+          if(c.type==='joker') inn=`<span style="font-size:.85rem">${c.sub==='shield'?'🛡️':'🧰'}</span>`;
+          else if(c.type==='tool') inn=`<span style="font-size:.7rem;font-family:Cinzel,serif">${c.tool}</span><span style="font-size:.8rem">${{J:'⚔️',Q:'🔭',K:'🔄'}[c.tool]}</span>`;
+          else if(c.type==='golden') inn=`<span style="font-size:.7rem;font-family:Cinzel,serif">A</span><span style="font-size:.8rem">${SUITS[c.suit].i}</span>`;
+          else inn=`<span style="font-size:.7rem;font-family:Cinzel,serif">${c.num}</span><span style="font-size:.8rem">${SUITS[c.suit].i}</span>`;
+          return `<div class="mc ${scls(c)}" style="width:40px;height:56px;flex-direction:column;gap:1px">${inn}</div>`;
+        }
+        return `<div class="mc fd2" style="width:40px;height:56px">⚜</div>`;
+      }).join('');
+      const empty=Array(Math.max(0,G.config.sackSize-sack.length)).fill(`<div class="mc" style="width:40px;height:56px;border-color:var(--tm);border-style:dashed;opacity:.3"></div>`).join('');
+      html+=`<div class="ocard ${isCur?'ao':''}" style="${isDone?'opacity:.5':''}">
+        <div class="ohdr"><span class="onm">${op.name.split(' ')[0]}${op.shieldInSack?' 🛡️':''}${isDone?' ✔':''}</span><span class="opts">${op.score}pts</span></div>
+        <div class="crow2">${cards}${empty}</div>
+      </div>`;
+    });
+    html+='</div>';
+  }
+
+  // Log
+  html+=`<div class="panel"><div class="plbl">Registro</div><div class="lbox">${(G.log||[]).slice(0,8).map(e=>`<div class="le ${e.ev||''}">${e.msg}</div>`).join('')}</div></div>`;
+  document.getElementById('gbody').innerHTML=html;
+}
+
+// ════════════════════════════════════════════
+//  GAME ACTIONS (write full state to Firebase)
+// ════════════════════════════════════════════
+function myTurn(){ return G&&myIdx>=0&&G.curIdx===myIdx; }
+
+function push(state){ return db.ref(`rooms/${roomId}`).set(state); }
+
+function withState(fn){
+  if(!myTurn()) return;
+  const s=JSON.parse(JSON.stringify(G));
+  const result=fn(s);
+  if(result!==false) push(s);
+}
+
+// SAQUE
+function actSaque(){
+  if(!myTurn()) return;
+  const p=G.players2[myIdx];
+  if(!sackOk(p)){showInfo('Saco inválido','Tu saco no está completo o no cumple la modalidad.');return;}
+  const attackers=G.players2.filter((o,i)=>i!==myIdx&&(o.sack||[]).some(c=>c&&c.type==='tool'&&c.tool==='J'));
+  if(attackers.length&&!G.frenzy){
+    const btns=attackers.map(a=>{const ai=G.players2.findIndex(p=>p.uid===a.uid);return`<button class="btn br" onclick="doCancelSaque(${ai});closeModal()">⚔ ${a.name.split(' ')[0]} cancela</button>`;}).join('');
+    showModal(`<div class="mt">¡${p.name.split(' ')[0]} canta Saque!</div><div class="mx">${attackers.map(a=>a.name.split(' ')[0]).join(', ')} tiene${attackers.length>1?'n':''} Daga.</div><div class="mbs">${btns}<button class="btn bg" onclick="confirmSaque(false);closeModal()">Nadie cancela</button></div>`);
+  } else confirmSaque(false);
+}
+
+function doCancelSaque(oppIdx){
+  closeModal();
+  withState(s=>{
+    const sp=s.players2[myIdx], opp=s.players2[oppIdx];
+    if(sp.shieldInSack){
+      const si=sp.sack.findIndex(c=>c&&c.type==='joker'&&c.sub==='shield');
+      if(si!==-1){s.discard.push(sp.sack.splice(si,1)[0]);updShield(sp);}
+      s.log=slog(s,`${sp.name.split(' ')[0]} usa Escudo — Daga bloqueada.`,'ei');
+      confirmSaqueOnState(s,false); return;
+    }
+    const spj=sp.sack.findIndex(c=>c&&c.type==='tool'&&c.tool==='J');
+    if(spj!==-1){
+      showModal(`<div class="mt">¿Respondés con tu Daga?</div><div class="mx">${opp.name.split(' ')[0]} cancela tu Saque. ¿Usás tu J para anular?</div><div class="mbs"><button class="btn bb" onclick="doResJ(${oppIdx});closeModal()">Sí, anular</button><button class="btn br" onclick="doExCancelSaque(${oppIdx});closeModal()">No</button></div>`);
+      return false;
+    }
+    doExCancelSaqueOnState(s,oppIdx);
+  });
+}
+
+window.doResJ=function(oppIdx){
+  withState(s=>{
+    const sp=s.players2[myIdx],opp=s.players2[oppIdx];
+    const si=sp.sack.findIndex(c=>c&&c.type==='tool'&&c.tool==='J');
+    const oi=opp.sack.findIndex(c=>c&&c.type==='tool'&&c.tool==='J');
+    if(si!==-1)s.discard.push(sp.sack.splice(si,1)[0]);
+    if(oi!==-1)s.discard.push(opp.sack.splice(oi,1)[0]);
+    s.log=slog(s,'Ambas dagas se anulan — Saque sigue.','ei');
+    confirmSaqueOnState(s,false);
+  });
+};
+
+window.doExCancelSaque=function(oppIdx){ withState(s=>doExCancelSaqueOnState(s,oppIdx)); };
+
+function doExCancelSaqueOnState(s,oppIdx){
+  const opp=s.players2[oppIdx],sp=s.players2[myIdx];
+  const ji=opp.sack.findIndex(c=>c&&c.type==='tool'&&c.tool==='J');
+  if(ji!==-1)s.discard.push(opp.sack.splice(ji,1)[0]);
+  s.log=slog(s,`${opp.name.split(' ')[0]} cancela Saque de ${sp.name.split(' ')[0]}.`,'ea');
+  // Need to discard 1 card — show picker
+  const cards=sp.sack.map((c,i)=>c?`<div onclick="doDscForCancel(${i})" style="cursor:pointer">${chtml(c,{ck:true})}</div>`:'').join('');
+  showModal(`<div class="mt">Descartá 1 carta de tu Saco</div><div class="mcs" id="dfc">${cards}</div>`);
+  // Reattach click handlers properly
+  const dfc=document.getElementById('dfc');
+  if(dfc){dfc.innerHTML='';(sp.sack||[]).forEach((c,i)=>{if(!c)return;const d=document.createElement('div');d.innerHTML=chtml(c,{ck:true});d.firstChild.onclick=()=>{closeModal();doDscForCancelExec(i);};dfc.appendChild(d.firstChild);});}
+  return false;
+}
+
+window.doDscForCancelExec=function(idx){
+  withState(s=>{
+    const sp=s.players2[myIdx];
+    if(sp.sack[idx]){s.discard.push(sp.sack.splice(idx,1)[0]);updShield(sp);}
+    s.log=slog(s,`${sp.name.split(' ')[0]} descarta 1 carta.`,'ei');
+    advTurn(s);
+  });
+};
+
+function confirmSaque(second){ withState(s=>confirmSaqueOnState(s,second)); }
+
+function confirmSaqueOnState(s,second){
+  closeModal();
+  const sp=s.players2[myIdx];
+  const rs=calcSc(sp), bonus=second?0:3, total=rs+bonus;
+  sp.score+=total;
+  s.log=slog(s,`${sp.name.split(' ')[0]} ${second?'2do':'1er'} ganador — +${bonus}+${rs}=${total}pts`,'es');
+  if(s.config.goldSeek&&sp.goldenBags>=4){endGame(s,sp);return;}
+  if(sp.score>=40){endGame(s,sp);return;}
+  if(!second){
+    s.roundWinners=[...(s.roundWinners||[]),myIdx];
+    const rem=s.players2.map((_,i)=>i).filter(i=>!(s.roundWinners||[]).includes(i));
+    if(rem.length<=2) startFrz(s,rem);
+    else{s.log=slog(s,'Buscando 2do ganador...','ei');advTurn(s);}
+  } else {
+    const rem=s.players2.map((_,i)=>i).filter(i=>!(s.roundWinners||[]).includes(i));
+    if(rem.length>=2) startFrz(s,rem); else newRound(s);
+  }
+}
+
+// COMBO
+function actCombo(){
+  if(!myTurn()||G.phase!=='saque')return;
+  withState(s=>{
+    const p=s.players2[myIdx], min=Math.ceil(s.config.sackSize/2);
+    for(const suit of SK){
+      const m=(p.sack||[]).filter(c=>c&&c.type==='treasure'&&c.suit===suit);
+      if(m.length>=min){p.pendingCombo=suit;s.log=slog(s,`${p.name.split(' ')[0]} marca combo ${SUITS[suit].n}.`,'ei');s.phase='take';return;}
+    }
+    showInfo('Combo inválido',`Necesitás ${Math.ceil(G.config.sackSize/2)} cartas del mismo palo.`);
+    return false;
+  });
+}
+
+// TAKE
+function actTake(){
+  if(!myTurn()||G.phase!=='take')return;
+  withState(s=>{
+    const p=s.players2[myIdx];
+    if(p.pendingCombo){applyCombo(s,p);return;}
+    const r=drawOne(s);s.deck=r.deck;s.discard=r.discard;
+    if(!r.card)return;
+    s.takenCard=r.card;
+    s.log=slog(s,`${p.name.split(' ')[0]} toma una carta.`,'ei');
+    s.phase=(p.sack||[]).length>=s.config.sackSize?'discard':'tool';
+  });
+}
+
+function applyCombo(s,p){
+  const suit=p.pendingCombo; p.pendingCombo=null;
+  s.log=slog(s,`${p.name.split(' ')[0]} activa combo ${SUITS[suit].n}.`,'ei');
+  if(suit==='coins'){
+    const r1=drawOne(s);s.deck=r1.deck;s.discard=r1.discard;
+    const r2=drawOne(s);s.deck=r2.deck;s.discard=r2.discard;
+    if(!r1.card){s.phase='tool';return;}
+    if(!r2.card){s.takenCard=r1.card;s.phase='tool';return;}
+    // show picker — need to push state first then show modal
+    s.phase='tool';
+    window._comboCards=[r1.card,r2.card];
+    push(s).then(()=>{
+      showModal(`<div class="mt">♠ Combo Monedas — elegí 1</div><div class="mcs" id="cpick"></div>`);
+      const cp=document.getElementById('cpick');
+      [r1.card,r2.card].forEach((c,i)=>{const d=document.createElement('div');d.innerHTML=chtml(c,{ck:true});d.firstChild.onclick=()=>{closeModal();doPickCombo(i);};cp.appendChild(d.firstChild);});
+    });
+    return false;
+  } else if(suit==='crafts'){
+    if(s.discard.length>0){s.takenCard=s.discard.pop();s.log=slog(s,`${p.name.split(' ')[0]} toma de la Cubeta.`,'ei');}
+    else{const r=drawOne(s);s.deck=r.deck;s.discard=r.discard;s.takenCard=r.card;}
+    s.phase='tool';
+  } else if(suit==='gems'){
+    const peek=(s.deck||[]).slice(-4).reverse();
+    s.phase='tool';
+    push(s).then(()=>{
+      showModal(`<div class="mt">🔮 Combo Piedras — próximas cartas</div><div class="mcs">${peek.map(c=>chtml(c)).join('')}</div><div class="mbs"><button class="btn bg" onclick="doAfterPeek()">OK</button></div>`);
+    });
+    return false;
+  } else if(suit==='jewels'){
+    p.heartProt=true;
+    const r=drawOne(s);s.deck=r.deck;s.discard=r.discard;s.takenCard=r.card;
+    s.phase='tool';
+  }
+}
+
+window.doPickCombo=function(idx){
+  withState(s=>{
+    const [c1,c2]=window._comboCards||[];
+    if(!c1)return;
+    s.takenCard=idx===0?c1:c2;
+    s.discard=[...(s.discard||[]),(idx===0?c2:c1)];
+    s.phase='tool';
+    s.log=slog(s,`${s.players2[myIdx].name.split(' ')[0]} eligió ${cname(s.takenCard)}.`,'ei');
+  });
+};
+
+window.doAfterPeek=function(){
+  closeModal();
+  withState(s=>{
+    const r=drawOne(s);s.deck=r.deck;s.discard=r.discard;s.takenCard=r.card;s.phase='tool';
+  });
+};
+
+// DAGGER J
+function actJ(){
+  if(!myTurn())return;
+  const targets=G.players2.filter((o,i)=>i!==myIdx&&(o.sack||[]).some(Boolean));
+  if(!targets.length){showInfo('Sin objetivos','Ningún oponente tiene cartas.');return;}
+  const btns=targets.map(t=>{const ti=G.players2.findIndex(p=>p.uid===t.uid);return`<button class="btn br" onclick="doJ(${ti});closeModal()">⚔ ${t.name.split(' ')[0]}</button>`;}).join('');
+  showModal(`<div class="mt">⚔ Daga — elegí objetivo</div><div class="mbs">${btns}<button class="btn bd" onclick="closeModal()">Cancelar</button></div>`);
+}
+
+window.doJ=function(ti){
+  withState(s=>{
+    const a=s.players2[myIdx],t=s.players2[ti];
+    if(t.heartProt){s.log=slog(s,'Daga bloqueada por protección.','ei');consumeJ(s,a);s.phase='discard';return;}
+    if(t.shieldInSack){
+      const si=t.sack.findIndex(c=>c&&c.type==='joker'&&c.sub==='shield');
+      if(si!==-1){s.discard.push(t.sack.splice(si,1)[0]);updShield(t);}
+      s.log=slog(s,`${t.name.split(' ')[0]} usa Escudo.`,'ei');consumeJ(s,a);s.phase='discard';return;
+    }
+    // Show card picker
+    push(s).then(()=>{
+      showModal(`<div class="mt">Elegí carta de ${t.name.split(' ')[0]}</div><div class="mcs" id="jpc"></div><div class="mbs"><button class="btn bd" onclick="closeModal()">Cancelar</button></div>`);
+      const jpc=document.getElementById('jpc');
+      (G.players2[ti].sack||[]).forEach((c,ci)=>{if(!c)return;const d=document.createElement('div');d.innerHTML=chtml(c,{ck:true});d.firstChild.onclick=()=>{closeModal();doExJ(ti,ci);};jpc.appendChild(d.firstChild);});
+    });
+    return false;
+  });
+};
+
+window.doExJ=function(ti,ci){
+  withState(s=>{
+    const a=s.players2[myIdx],t=s.players2[ti];
+    if(t.sack[ci]){
+      const rm=t.sack.splice(ci,1)[0];
+      if(t.pendingCombo&&rm.suit===t.pendingCombo)t.pendingCombo=null;
+      s.discard.push(rm);updShield(t);
+      s.log=slog(s,`${a.name.split(' ')[0]} usa Daga en ${t.name.split(' ')[0]} — pierde ${cname(rm)}.`,'ea');
+    }
+    consumeJ(s,a);s.phase='discard';
+  });
+};
+
+function consumeJ(s,p){
+  if(s.takenCard&&s.takenCard.type==='tool'&&s.takenCard.tool==='J'){s.discard.push(s.takenCard);s.takenCard=null;}
+  else{const i=(p.sack||[]).findIndex(c=>c&&c.type==='tool'&&c.tool==='J');if(i!==-1)s.discard.push(p.sack.splice(i,1)[0]);}
+  const r=drawOne(s);s.deck=r.deck;s.discard=r.discard;if(r.card)s.takenCard=r.card;
+}
+
+// BINOCULARS Q
+function actQ(){
+  if(!myTurn())return;
+  const targets=G.players2.filter((o,i)=>i!==myIdx&&(o.sack||[]).some(Boolean));
+  if(!targets.length){showInfo('Sin objetivos','');return;}
+  const btns=targets.map(t=>{const ti=G.players2.findIndex(p=>p.uid===t.uid);return`<button class="btn bb" onclick="doQ(${ti});closeModal()">🔭 ${t.name.split(' ')[0]}</button>`;}).join('');
+  showModal(`<div class="mt">🔭 Binoculares — ¿a quién?</div><div class="mbs">${btns}<button class="btn bd" onclick="closeModal()">Cancelar</button></div>`);
+}
+
+window.doQ=function(ti){
+  withState(s=>{
+    const a=s.players2[myIdx],t=s.players2[ti];
+    if(t.heartProt){s.log=slog(s,'Binoculares bloqueados.','ei');consumeQ(s,a);s.phase='discard';return;}
+    let show=[];
+    const golds=(t.sack||[]).filter(c=>c&&c.type==='golden');
+    const jokers=(t.sack||[]).filter(c=>c&&c.type==='joker');
+    const tools=(t.sack||[]).filter(c=>c&&c.type==='tool');
+    if(golds.length)show=[golds[0]];else if(jokers.length)show=[jokers[0]];else if(tools.length)show=[tools[0]];else show=(t.sack||[]).filter(Boolean).slice(0,2);
+    consumeQ(s,a);s.phase='discard';
+    s.log=slog(s,`${a.name.split(' ')[0]} usa Binoculares en ${t.name.split(' ')[0]}.`,'ei');
+    push(s).then(()=>{showModal(`<div class="mt">Saco de ${t.name.split(' ')[0]}</div><div class="mcs">${show.map(c=>chtml(c)).join('')}</div><div class="mbs"><button class="btn bg" onclick="closeModal()">OK</button></div>`);});
+    return false;
+  });
+};
+
+function consumeQ(s,p){
+  if(s.takenCard&&s.takenCard.type==='tool'&&s.takenCard.tool==='Q'){s.discard.push(s.takenCard);s.takenCard=null;}
+  else{const i=(p.sack||[]).findIndex(c=>c&&c.type==='tool'&&c.tool==='Q');if(i!==-1)s.discard.push(p.sack.splice(i,1)[0]);}
+  const r=drawOne(s);s.deck=r.deck;s.discard=r.discard;if(r.card)s.takenCard=r.card;
+}
+
+// TRUEQUE K
+function actK(){
+  if(!myTurn())return;
+  const targets=G.players2.filter((o,i)=>i!==myIdx&&(o.sack||[]).some(Boolean));
+  if(!targets.length){showInfo('Sin objetivos','');return;}
+  const btns=targets.map(t=>{const ti=G.players2.findIndex(p=>p.uid===t.uid);return`<button class="btn bb" onclick="doK(${ti});closeModal()">🔄 ${t.name.split(' ')[0]}</button>`;}).join('');
+  showModal(`<div class="mt">🔄 Trueque — ¿con quién?</div><div class="mbs">${btns}<button class="btn bd" onclick="closeModal()">Cancelar</button></div>`);
+}
+
+window.doK=function(ti){
+  withState(s=>{
+    const a=s.players2[myIdx],t=s.players2[ti];
+    if(t.heartProt){s.log=slog(s,'Trueque bloqueado.','ei');consumeK(s,a);s.phase='discard';return;}
+    const fu=(t.sack||[])[0];
+    if(fu){
+      push(s).then(()=>{
+        showModal(`<div class="mt">Carta boca arriba de ${t.name.split(' ')[0]}</div><div class="mcs">${chtml(fu)}</div><div class="mbs"><button class="btn bk" onclick="doTakeFU(${ti});closeModal()">Tomar gratis</button><button class="btn bb" onclick="showBlindT(${ti});closeModal()">Intercambio ciego</button></div>`);
+      });
+      return false;
+    }
+    showBlindTState(s,ti);
+  });
+};
+
+window.doTakeFU=function(ti){
+  withState(s=>{
+    const a=s.players2[myIdx],t=s.players2[ti];
+    const c=t.sack.shift();
+    if(c){s.takenCard=c;s.log=slog(s,`${a.name.split(' ')[0]} toma carta de ${t.name.split(' ')[0]}.`,'ei');}
+    consumeK(s,a);s.phase='discard';
+  });
+};
+
+window.showBlindT=function(ti){
+  const p=G.players2[myIdx];
+  showModal(`<div class="mt">Trueque ciego — elegí tu carta</div><div class="mcs" id="tpc"></div><div class="mbs"><button class="btn bd" onclick="closeModal()">Cancelar</button></div>`);
+  const tpc=document.getElementById('tpc');
+  (p.sack||[]).forEach((c,ci)=>{if(!c)return;const d=document.createElement('div');d.innerHTML=chtml(c,{ck:true});d.firstChild.onclick=()=>{closeModal();doExK(ti,ci);};tpc.appendChild(d.firstChild);});
+};
+
+function showBlindTState(s,ti){
+  push(s).then(()=>window.showBlindT(ti));
+  return false;
+}
+
+window.doExK=function(ti,mci){
+  withState(s=>{
+    const a=s.players2[myIdx],t=s.players2[ti];
+    const tci=(t.sack||[]).findIndex(Boolean);
+    const ac=a.sack.splice(mci,1)[0],tc=tci>=0?t.sack.splice(tci,1)[0]:null;
+    if(ac)t.sack.push(ac);if(tc)s.takenCard=tc;
+    updShield(a);updShield(t);
+    s.log=slog(s,`${a.name.split(' ')[0]} hace Trueque ciego con ${t.name.split(' ')[0]}.`,'ei');
+    consumeK(s,a);s.phase='discard';
+  });
+};
+
+function consumeK(s,p){
+  if(s.takenCard&&s.takenCard.type==='tool'&&s.takenCard.tool==='K'){s.discard.push(s.takenCard);s.takenCard=null;}
+  else{const i=(p.sack||[]).findIndex(c=>c&&c.type==='tool'&&c.tool==='K');if(i!==-1)s.discard.push(p.sack.splice(i,1)[0]);}
+  const r=drawOne(s);s.deck=r.deck;s.discard=r.discard;if(r.card)s.takenCard=r.card;
+}
+
+// TOOLBOX
+function actTB(){
+  showModal(`<div class="mt">🧰 Caja de Herramientas</div><div class="mbs">
+    <button class="btn br" onclick="doTBAs('J');closeModal()">⚔ Como Daga</button>
+    <button class="btn bb" onclick="doTBAs('Q');closeModal()">🔭 Como Binoculares</button>
+    <button class="btn bb" onclick="doTBAs('K');closeModal()">🔄 Como Trueque</button>
+    <button class="btn bd" onclick="closeModal()">Cancelar</button>
+  </div>`);
+}
+
+window.doTBAs=function(tool){
+  withState(s=>{
+    const p=s.players2[myIdx],conv=c=>({...c,type:'tool',tool});
+    if(s.takenCard&&s.takenCard.type==='joker'&&s.takenCard.sub==='toolbox')s.takenCard=conv(s.takenCard);
+    else{const i=(p.sack||[]).findIndex(c=>c&&c.type==='joker'&&c.sub==='toolbox');if(i!==-1)p.sack[i]=conv(p.sack[i]);}
+  });
+  if(tool==='J')actJ();else if(tool==='Q')actQ();else actK();
+};
+
+// KEEP / DISCARD
+function actKeep(){
+  if(!myTurn()||!G.takenCard)return;
+  withState(s=>{
+    const p=s.players2[myIdx];
+    if((p.sack||[]).length>=s.config.sackSize){showInfo('Saco lleno','Debés botar o intercambiar.');return false;}
+    p.sack=[...(p.sack||[]),s.takenCard];updShield(p);
+    s.log=slog(s,`${p.name.split(' ')[0]} guarda ${cname(s.takenCard)}.`,'ei');
+    s.takenCard=null;s.phase='discard';
+  });
+}
+
+function actDscTaken(){
+  if(!myTurn()||!G.takenCard)return;
+  withState(s=>{
+    s.discard.push(s.takenCard);
+    s.log=slog(s,`${s.players2[myIdx].name.split(' ')[0]} descarta la carta tomada.`,'ei');
+    s.takenCard=null;s.phase='done';
+  });
+}
+
+function actDsc(idx){
+  if(!myTurn())return;
+  withState(s=>{
+    const p=s.players2[myIdx];
+    if(!p.sack[idx])return;
+    s.discard.push(p.sack.splice(idx,1)[0]);updShield(p);
+    if(s.takenCard&&(p.sack||[]).length<s.config.sackSize){p.sack.push(s.takenCard);updShield(p);s.takenCard=null;}
+    s.log=slog(s,`${p.name.split(' ')[0]} descarta del Saco.`,'ei');
+    s.phase='done';
+  });
+}
+
+function actSwap(si){
+  if(!myTurn()||!G.takenCard)return;
+  withState(s=>{
+    const p=s.players2[myIdx];
+    if(!p.sack[si])return;
+    const out=p.sack.splice(si,1,s.takenCard)[0];
+    s.discard.push(out);updShield(p);
+    s.log=slog(s,`${p.name.split(' ')[0]} intercambia ${cname(s.takenCard)} por ${cname(out)}.`,'ei');
+    s.takenCard=null;s.phase='done';
+  });
+}
+
+function actFrz(){
+  if(!myTurn()||G.phase!=='take')return;
+  withState(s=>{
+    const p=s.players2[myIdx];
+    const r1=drawOne(s);s.deck=r1.deck;s.discard=r1.discard;
+    const r2=drawOne(s);s.deck=r2.deck;s.discard=r2.discard;
+    if(!r1.card)return;
+    if((p.sack||[]).length<s.config.sackSize){
+      p.sack=[...(p.sack||[]),r1.card];updShield(p);
+      if(r2.card&&p.sack.length<s.config.sackSize){p.sack.push(r2.card);updShield(p);}
+      else if(r2.card)s.discard.push(r2.card);
+    } else {s.takenCard=r1.card;if(r2.card)s.discard.push(r2.card);}
+    s.log=slog(s,`${p.name.split(' ')[0]} toma en Frenesí.`,'ei');s.phase='discard';
+  });
+}
+
+function actEnd(){
+  if(!myTurn())return;
+  withState(s=>{
+    const p=s.players2[myIdx];
+    if(s.takenCard&&(p.sack||[]).length<s.config.sackSize){p.sack=[...(p.sack||[]),s.takenCard];updShield(p);s.takenCard=null;}
+    else if(s.takenCard){s.discard.push(s.takenCard);s.takenCard=null;}
+    p.heartProt=false;s.phase='done';
+    advTurn(s);
+  });
+}
+
+// ════════════════════════════════════════════
+//  TURN / ROUND / FRENZY
+// ════════════════════════════════════════════
+function advTurn(s){
+  const p=s.players2[s.curIdx];if(p)p.heartProt=false;
+  s.takenCard=null;s.phase='saque';
+  const rw=s.roundWinners||[];
+  if(s.frenzy){
+    const fi=(s.frenzyIdxs||[]).indexOf(s.curIdx);
+    s.curIdx=(s.frenzyIdxs||[])[(fi+1)%((s.frenzyIdxs||[]).length)]??0;
+    s.phase='take';
+  } else {
+    let next=(s.curIdx+1)%s.players2.length, tries=0;
+    while(rw.includes(next)&&tries<s.players2.length){next=(next+1)%s.players2.length;tries++;}
+    s.curIdx=next;
+  }
+}
+
+function startFrz(s,ids){
+  s.log=slog(s,'¡FRENESÍ! Solo quedan 2 jugadores.','es');
+  s.frenzy=true;s.frenzyIdxs=ids;
+  const all=[...(s.deck||[]),...(s.discard||[])];
+  s.players2.forEach(p=>{all.push(...(p.sack||[]).filter(Boolean));p.sack=[];p.shieldInSack=false;p.pendingCombo=null;});
+  s.deck=shuffle(all);s.discard=[];s.curIdx=ids[0];s.phase='take';
+}
+
+function newRound(s){
+  s.roundNum=(s.roundNum||1)+1;s.roundWinners=[];s.frenzy=false;s.frenzyIdxs=[];
+  const loser=s.players2.reduce((a,b)=>a.score<b.score?a:b);
+  s.curIdx=s.players2.indexOf(loser);
+  const all=[...(s.deck||[]),...(s.discard||[])];
+  s.players2.forEach(p=>{all.push(...(p.sack||[]).filter(Boolean));p.sack=[];p.shieldInSack=false;p.pendingCombo=null;p.heartProt=false;});
+  s.deck=shuffle(all);s.discard=[];s.takenCard=null;s.phase='saque';
+  s.log=slog(s,`=== Ronda ${s.roundNum} ===`,'es');
+}
+
+function endGame(s,winner){s.status='ended';s.winner=winner.uid;s.log=slog(s,`¡${winner.name.split(' ')[0]} gana!`,'es');}
+
+// ════════════════════════════════════════════
+//  END SCREEN
+// ════════════════════════════════════════════
+function showEnd(r){
+  showScreen('send');
+  const w=(r.players2||[]).find(p=>p.uid===r.winner);
+  document.getElementById('ewnm').textContent=w?w.name.split(' ')[0]:'—';
+  const sorted=[...(r.players2||[])].sort((a,b)=>b.score-a.score);
+  document.getElementById('escores').innerHTML=sorted.map(p=>`<div class="erow ${p.uid===r.winner?'w':''}"><span>${p.uid===r.winner?'👑 ':''}${p.name.split(' ')[0]}</span><span>${p.score}pts</span></div>`).join('');
+}
+
+function goLobby(){ clearListeners(); showLobby(); }
+</script>
+</body>
+</html>
