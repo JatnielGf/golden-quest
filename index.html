@@ -320,7 +320,10 @@ function showInfo(t,m) { showModal(`<div class="mt">${t}</div><div class="mx">${
 //  AUTH
 // ════════════════════════════════════════════
 async function signInGoogle() {
-  try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithRedirect(provider);
+  }
   catch(e) { document.getElementById('lerr').classList.add('show'); }
 }
 async function doSignOut() { if(roomId) await leaveRoom(); await auth.signOut(); showScreen('slo'); }
