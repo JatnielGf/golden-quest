@@ -290,6 +290,7 @@ const FIREBASE_CONFIG = {
 //  GLOBALS
 // ════════════════════════════════════════════
 let auth, db, me = null, roomId = null, amHost = false, myIdx = -1, G = null, listeners = [];
+window.__debug = () => ({me, myIdx, roomId, G});
 
 // ════════════════════════════════════════════
 //  BOOT
@@ -299,7 +300,6 @@ window.addEventListener('DOMContentLoaded', () => {
     firebase.initializeApp(FB);
     auth = firebase.auth();
     db   = firebase.database();
-    auth.getRedirectResult().catch(e => console.error('Redirect error:', e));
     auth.onAuthStateChanged(u => {
       if (u) { me = {uid:u.uid, name:u.displayName||'Explorador', photo:u.photoURL||''}; showLobby(); }
       else showScreen('slo');
@@ -321,10 +321,7 @@ function showInfo(t,m) { showModal(`<div class="mt">${t}</div><div class="mx">${
 //  AUTH
 // ════════════════════════════════════════════
 async function signInGoogle() {
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithRedirect(provider);
-  }
+  try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
   catch(e) { document.getElementById('lerr').classList.add('show'); }
 }
 async function doSignOut() { if(roomId) await leaveRoom(); await auth.signOut(); showScreen('slo'); }
@@ -620,7 +617,19 @@ function updShield(p){p.shieldInSack=(p.sack||[]).some(c=>c&&c.type==='joker'&&c
 //  RENDER GAME
 // ════════════════════════════════════════════
 function renderGame(){
-  if(!G||myIdx<0)return;
+  if(!G)return;
+  if(myIdx<0){
+    document.getElementById('gbody').innerHTML=`<div class="panel" style="border-color:#884444">
+      <div class="plbl" style="color:#e09090">⚠ Error: no te encontré en la partida</div>
+      <div style="font-size:.8rem;color:var(--td);line-height:1.6">
+        Mi UID: ${me.uid}<br>
+        Jugadores en la partida (uid):<br>
+        ${(G.players2||[]).map((p,i)=>`&nbsp;&nbsp;${i}: ${p.name?p.name.split(' ')[0]:'?'} — ${p.uid}`).join('<br>')||'(ninguno — players2 vacío o no existe)'}
+      </div>
+    </div>`;
+    document.getElementById('spills').innerHTML='';
+    return;
+  }
   // Score pills
   document.getElementById('spills').innerHTML=(G.players2||[]).map((p,i)=>{
     const isMe=p.uid===me.uid, isCur=i===G.curIdx;
@@ -752,6 +761,19 @@ function renderGame(){
 
   // Log
   html+=`<div class="panel"><div class="plbl">Registro</div><div class="lbox">${(G.log||[]).slice(0,8).map(e=>`<div class="le ${e.ev||''}">${e.msg}</div>`).join('')}</div></div>`;
+
+  // DEBUG PANEL (temporal)
+  html+=`<div class="panel" style="border-color:#884444">
+    <div class="plbl" style="color:#e09090">⚠ Panel de diagnóstico (temporal)</div>
+    <div style="font-size:.75rem;color:var(--td);line-height:1.6">
+      Mi UID: ${me.uid}<br>
+      myIdx: ${myIdx} | curIdx: ${G.curIdx} | ¿Es mi turno?: ${myIdx===G.curIdx?'SÍ':'NO'}<br>
+      Fase: ${G.phase} | Frenesí: ${G.frenzy?'sí':'no'}<br>
+      Jugadores (uid → idx):<br>
+      ${(G.players2||[]).map((p,i)=>`&nbsp;&nbsp;${i}: ${p.name.split(' ')[0]} — ${p.uid}${p.uid===me.uid?' ← YO':''}`).join('<br>')}
+    </div>
+  </div>`;
+
   document.getElementById('gbody').innerHTML=html;
 }
 
@@ -760,7 +782,7 @@ function renderGame(){
 // ════════════════════════════════════════════
 function myTurn(){ return G&&myIdx>=0&&G.curIdx===myIdx; }
 
-function push(state){ return db.ref(`rooms/${roomId}`).set(state); }
+function push(state){ return db.ref(`rooms/${roomId}`).set(state).catch(e=>{console.error('Push error:',e);showToast('Error al sincronizar: '+e.message);}); }
 
 function withState(fn){
   if(!myTurn()) return;
@@ -874,7 +896,8 @@ function actCombo(){
 
 // TAKE
 function actTake(){
-  if(!myTurn()||G.phase!=='take')return;
+  if(!myTurn())return;
+  if(G.phase!=='take'&&G.phase!=='saque')return;
   withState(s=>{
     const p=s.players2[myIdx];
     if(p.pendingCombo){applyCombo(s,p);return;}
